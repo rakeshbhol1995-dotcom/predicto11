@@ -10,7 +10,7 @@ const BrandLogo = () => (
   </svg>
 );
 
-export default function Header({ activeTab, setActiveTab, onOpenDeposit, onOpenAuth, currentView, setCurrentView }) {
+export default function Header({ activeTab, setActiveTab, onOpenDeposit, onOpenAuth, currentView, setCurrentView, apiStatus, isLiveApi }) {
   const { user, logoutUser, balance, selectedFiat, setSelectedFiat, fiatSymbol, cryptoBalances } = useBet();
   const [showDropdown, setShowDropdown] = useState(false);
 
@@ -63,6 +63,31 @@ export default function Header({ activeTab, setActiveTab, onOpenDeposit, onOpenA
             marginLeft: '2px',
             letterSpacing: 'normal'
           }}>CRYPTO</span>
+
+          {apiStatus && (
+            <span style={{
+              fontSize: '0.6rem',
+              color: isLiveApi ? 'var(--brand-emerald)' : 'rgba(255,255,255,0.4)',
+              background: 'rgba(255,255,255,0.05)',
+              border: isLiveApi ? '1.2px solid var(--brand-emerald)' : '1px solid rgba(255,255,255,0.1)',
+              padding: '2px 6px',
+              borderRadius: '4px',
+              fontWeight: 800,
+              marginLeft: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }} title={`API Status: ${apiStatus}`}>
+              <span style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                backgroundColor: isLiveApi ? 'var(--brand-emerald)' : 'var(--live-red)',
+                display: 'inline-block'
+              }} />
+              {isLiveApi ? 'LIVE API' : 'SIMULATION'}
+            </span>
+          )}
         </div>
 
         {currentView !== 'admin' && (

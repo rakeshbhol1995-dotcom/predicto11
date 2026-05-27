@@ -14,6 +14,8 @@ import LiveChat from './components/LiveChat';
 import { INITIAL_MATCHES } from './data/mockData';
 import { Shield, Home, PlayCircle, ShoppingBag, User, Crown } from 'lucide-react';
 
+const ODDS_API_KEY = "9a2e7922e00027abb0051b99528d6d69";
+
 function MainAppContent() {
   const [matches, setMatches] = useState(INITIAL_MATCHES);
   const [selectedSport, setSelectedSport] = useState('All');
@@ -22,6 +24,8 @@ function MainAppContent() {
   const [oddsFlash, setOddsFlash] = useState({});
   const [isDepositOpen, setIsDepositOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isLiveApi, setIsLiveApi] = useState(false);
+  const [apiStatus, setApiStatus] = useState('Disconnected');
   
   // Views: 'dashboard' | 'match-detail' | 'admin' | 'mobile-slip' | 'mobile-mybets'
   const [currentView, setCurrentView] = useState('dashboard');
@@ -35,6 +39,123 @@ function MainAppContent() {
       if (updated) setSelectedMatch(updated);
     }
   }, [matches]);
+
+  // Fetch real matches and odds from The Odds API on mount
+  useEffect(() => {
+    if (!ODDS_API_KEY) return;
+    
+    setApiStatus('Connecting...');
+    fetch(`https://api.the-odds-api.com/v4/sports/upcoming/odds/?apiKey=${ODDS_API_KEY}&regions=eu,us&markets=h2h`)
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP Error ${res.status}`);
+        }
+        return res.json();
+      })
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          // Map API events to our match structure
+          const mapped = data.slice(0, 15).map(event => {
+            let sport = "Soccer";
+            const sk = event.sport_key.toLowerCase();
+            if (sk.includes("cricket")) sport = "Cricket";
+            else if (sk.includes("tennis")) sport = "Tennis";
+            else if (sk.includes("basketball")) sport = "Basketball";
+            else if (sk.includes("soccer") || sk.includes("football")) sport = "Soccer";
+            else if (sk.includes("baseball")) sport = "Baseball";
+            else if (sk.includes("icehockey")) sport = "Ice Hockey";
+            else sport = event.sport_title || "Soccer";
+
+            // Find bookmaker odds (e.g. pinnacle, betsson, unibet, etc.)
+            const bookmaker = event.bookmakers?.find(b => b.markets?.some(m => m.key === 'h2h')) || event.bookmakers?.[0];
+            const market = bookmaker?.markets?.find(m => m.key === "h2h");
+            
+            let oddsHome = 1.90;
+            let oddsAway = 1.90;
+            let oddsDraw = null;
+
+            if (market?.outcomes) {
+              const homeOutcome = market.outcomes.find(o => o.name === event.home_team);
+              const awayOutcome = market.outcomes.find(o => o.name === event.away_team);
+              const drawOutcome = market.outcomes.find(o => o.name === "Draw" || o.name === "Tie");
+
+              if (homeOutcome) oddsHome = homeOutcome.price;
+              if (awayOutcome) oddsAway = awayOutcome.price;
+              if (drawOutcome) oddsDraw = drawOutcome.price;
+            }
+
+            // Set dynamic live scores and information based on sport type
+            let homeScore = "0";
+            let awayScore = "0";
+            let status = "live";
+            let time = "35:00";
+            let eventStatus = "Game Play in Progress";
+
+            if (sport === 'Cricket') {
+              homeScore = "142/3";
+              awayScore = "128/4";
+              time = "16.1 Ov";
+              eventStatus = `${event.away_team} needs 15 runs in 23 balls`;
+            } else if (sport === 'Tennis') {
+              homeScore = "2 | 15";
+              awayScore = "1 | 30";
+              time = "Set 3";
+              eventStatus = "Break point opportunity";
+            } else if (sport === 'Soccer') {
+              homeScore = "1";
+              awayScore = "0";
+              time = "56:45";
+              eventStatus = "Attacking possession";
+            } else if (sport === 'Basketball') {
+              homeScore = "88";
+              awayScore = "92";
+              time = "Q4 4:12";
+              eventStatus = "Free throws awarded";
+            } else {
+              homeScore = "3";
+              awayScore = "2";
+              time = "Period 2";
+              eventStatus = "Powerplay";
+            }
+
+            return {
+              id: event.id,
+              sport: sport,
+              league: event.sport_title,
+              homeTeam: event.home_team,
+              awayTeam: event.away_team,
+              homeScore: homeScore,
+              awayScore: awayScore,
+              time: time,
+              status: status,
+              eventStatus: eventStatus,
+              stats: {
+                possession: [52, 48],
+                shots: [11, 8],
+                corners: [4, 3]
+              },
+              odds: {
+                home: oddsHome,
+                draw: oddsDraw || (sport === 'Soccer' ? 3.40 : null),
+                away: oddsAway
+              }
+            };
+          });
+
+          setMatches(mapped);
+          setSelectedMatch(mapped[0]);
+          setIsLiveApi(true);
+          setApiStatus('Live Active');
+        } else {
+          throw new Error("No events returned from API");
+        }
+      })
+      .catch(err => {
+        console.error("Odds API Error:", err.message);
+        setApiStatus(`Failed - Using Simulator`);
+        setIsLiveApi(false);
+      });
+  }, []);
 
   // Simulation Engine Loop
   useEffect(() => {
@@ -203,6 +324,8 @@ function MainAppContent() {
         onOpenAuth={() => setIsAuthOpen(true)}
         currentView={currentView}
         setCurrentView={setCurrentView}
+        apiStatus={apiStatus}
+        isLiveApi={isLiveApi}
       />
 
       {/* Main Grid Layout */}
