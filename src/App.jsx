@@ -232,8 +232,38 @@ function MainAppContent() {
               oddsFlash={oddsFlash}
             />
           ) : currentView === 'mobile-slip' || currentView === 'mobile-mybets' ? (
-            <div style={{ flexGrow: 1, overflowY: 'auto' }}>
-              <BetSlip />
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+              {/* Mobile Bet Slip header with back button */}
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '10px 14px',
+                background: 'var(--brand-teal-nav)',
+                borderBottom: '1px solid var(--border-color)',
+                flexShrink: 0,
+              }}>
+                <button
+                  onClick={() => setCurrentView('dashboard')}
+                  style={{
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '6px',
+                    color: '#fff',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    padding: '5px 12px',
+                    cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: '5px'
+                  }}
+                >
+                  ← Back to Matches
+                </button>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  {currentView === 'mobile-slip' ? 'Bet Slip' : 'My Bets'}
+                </span>
+              </div>
+              <div style={{ flexGrow: 1, overflowY: 'auto' }}>
+                <BetSlip />
+              </div>
             </div>
           ) : (
             <MainDashboard
@@ -244,6 +274,11 @@ function MainAppContent() {
               oddsFlash={oddsFlash}
               onSelectMatch={handleSelectMatch}
               selectedMatch={selectedMatch}
+              onOddsAdded={() => {
+                if (window.innerWidth <= 768) {
+                  setCurrentView('mobile-slip');
+                }
+              }}
             />
           )}
         </main>

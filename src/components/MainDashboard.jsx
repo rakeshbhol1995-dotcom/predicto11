@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { PROMOTIONS } from '../data/mockData';
 import { useBet } from '../context/BetContext';
-import { Flame, Clock, Radio, PlayCircle, ChevronRight } from 'lucide-react';
+import { Flame, Clock, Radio, PlayCircle, ChevronRight, ShoppingBag, CheckCircle } from 'lucide-react';
 
 const SPORT_PILLS = [
   { name: 'All', icon: '🔥' },
@@ -12,17 +12,40 @@ const SPORT_PILLS = [
   { name: 'Esports', icon: '🎮' },
 ];
 
-export default function MainDashboard({ matches, selectedSport, setSelectedSport, activeTab, oddsFlash, onSelectMatch, selectedMatch }) {
+export default function MainDashboard({ matches, selectedSport, setSelectedSport, activeTab, oddsFlash, onSelectMatch, selectedMatch, onOddsAdded }) {
   const { selections, toggleSelection } = useBet();
+  const [toast, setToast] = useState(null); // { type: 'added'|'removed', team, odd }
 
-  // Filter matches based on active tab and sidebar/pill selection
+  // Handle odds click with toast + mobile navigation
+  const handleOddsClick = (match, outcomeName, oddValue) => {
+    if (oddValue === null) return;
+    const alreadySelected = selections.some(
+      s => s.matchId === match.id && s.outcomeName === outcomeName
+    );
+    toggleSelection(match, outcomeName, oddValue);
+
+    if (!alreadySelected) {
+      // Show toast
+      const teamLabel = outcomeName === 'Home' ? match.homeTeam
+        : outcomeName === 'Away' ? match.awayTeam : 'Draw';
+      setToast({ type: 'added', team: teamLabel, odd: oddValue });
+      setTimeout(() => setToast(null), 2500);
+      // Navigate to slip on mobile
+      if (onOddsAdded) onOddsAdded();
+    } else {
+      setToast({ type: 'removed', team: outcomeName });
+      setTimeout(() => setToast(null), 1500);
+    }
+  };
+
+  // Filter matches
   const filteredMatches = useMemo(() => matches.filter((match) => {
     const matchSport = selectedSport === 'All' ? true : match.sport === selectedSport;
     const matchStatus = activeTab === 'In-Play' ? match.status === 'live' : true;
     return matchSport && matchStatus;
   }), [matches, selectedSport, activeTab]);
 
-  // Get which sports actually have matches (for pill display)
+  // Active sports for pills
   const activeSports = useMemo(() => {
     const base = activeTab === 'In-Play'
       ? matches.filter(m => m.status === 'live')
@@ -31,7 +54,7 @@ export default function MainDashboard({ matches, selectedSport, setSelectedSport
     return SPORT_PILLS.filter(p => p.name === 'All' || names.has(p.name));
   }, [matches, activeTab]);
 
-  // In-Play: group by sport
+  // Group by sport for In-Play All view
   const groupedMatches = useMemo(() => {
     if (activeTab !== 'In-Play' || selectedSport !== 'All') return null;
     const groups = {};
@@ -77,7 +100,7 @@ export default function MainDashboard({ matches, selectedSport, setSelectedSport
       }}
       onClick={() => onSelectMatch(match)}
     >
-      {/* Card Header - Sport + League + Status */}
+      {/* Card Header */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
@@ -130,9 +153,7 @@ export default function MainDashboard({ matches, selectedSport, setSelectedSport
       <div style={{ padding: '10px 12px 6px 12px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '6px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontWeight: 700, fontSize: '0.88rem', color: '#fff' }}>
-              {match.homeTeam}
-            </span>
+            <span style={{ fontWeight: 700, fontSize: '0.88rem', color: '#fff' }}>{match.homeTeam}</span>
             {match.status === 'live' && (
               <span style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--brand-yellow)', fontFamily: 'var(--font-display)' }}>
                 {match.homeScore}
@@ -140,23 +161,19 @@ export default function MainDashboard({ matches, selectedSport, setSelectedSport
             )}
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontWeight: 700, fontSize: '0.88rem', color: 'rgba(255,255,255,0.75)' }}>
-              {match.awayTeam}
-            </span>
+            <span style={{ fontWeight: 700, fontSize: '0.88rem', color: 'rgba(255,255,255,0.75)' }}>{match.awayTeam}</span>
             {match.status === 'live' && (
-              <span style={{ fontWeight: 800, fontSize: '0.95rem', color: 'rgba(198, 255, 0, 0.75)', fontFamily: 'var(--font-display)' }}>
+              <span style={{ fontWeight: 800, fontSize: '0.95rem', color: 'rgba(198,255,0,0.75)', fontFamily: 'var(--font-display)' }}>
                 {match.awayScore}
               </span>
             )}
           </div>
         </div>
 
-        {/* Event Status */}
         {match.status === 'live' && match.eventStatus && (
           <div style={{
             display: 'flex', alignItems: 'center', gap: '4px',
-            fontSize: '0.68rem', color: 'var(--text-muted)',
-            marginBottom: '8px',
+            fontSize: '0.68rem', color: 'var(--text-muted)', marginBottom: '8px',
           }}>
             <PlayCircle size={9} style={{ color: 'var(--live-green)', flexShrink: 0 }} />
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -166,36 +183,30 @@ export default function MainDashboard({ matches, selectedSport, setSelectedSport
         )}
 
         {/* Odds Buttons */}
-        <div
-          className="match-odds-row"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Home */}
+        <div className="match-odds-row" onClick={(e) => e.stopPropagation()}>
           <button
             className={`odds-btn ${isSelected(match.id, 'Home') ? 'odds-btn-selected' : ''} ${getFlashClass(match.id, 'home')}`}
-            onClick={() => toggleSelection(match, 'Home', match.odds.home)}
+            onClick={() => handleOddsClick(match, 'Home', match.odds.home)}
           >
             <span className="odds-label">1</span>
             <span className="odds-value">{match.odds.home ? match.odds.home.toFixed(2) : '-'}</span>
           </button>
 
-          {/* Draw */}
           {match.odds.draw !== null ? (
             <button
               className={`odds-btn ${isSelected(match.id, 'Draw') ? 'odds-btn-selected' : ''} ${getFlashClass(match.id, 'draw')}`}
-              onClick={() => toggleSelection(match, 'Draw', match.odds.draw)}
+              onClick={() => handleOddsClick(match, 'Draw', match.odds.draw)}
             >
               <span className="odds-label">X</span>
               <span className="odds-value">{match.odds.draw ? match.odds.draw.toFixed(2) : '-'}</span>
             </button>
           ) : (
-            <div style={{ flex: 1 }} /> /* spacer for 2-way markets */
+            <div style={{ flex: 1 }} />
           )}
 
-          {/* Away */}
           <button
             className={`odds-btn ${isSelected(match.id, 'Away') ? 'odds-btn-selected' : ''} ${getFlashClass(match.id, 'away')}`}
-            onClick={() => toggleSelection(match, 'Away', match.odds.away)}
+            onClick={() => handleOddsClick(match, 'Away', match.odds.away)}
           >
             <span className="odds-label">2</span>
             <span className="odds-value">{match.odds.away ? match.odds.away.toFixed(2) : '-'}</span>
@@ -207,7 +218,53 @@ export default function MainDashboard({ matches, selectedSport, setSelectedSport
 
   return (
     <main className="dashboard-main">
-      {/* Promo Cards - only show on Sports tab */}
+
+      {/* ===== TOAST NOTIFICATION ===== */}
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          bottom: '70px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 999,
+          background: toast.type === 'added'
+            ? 'linear-gradient(135deg, #082d25, #051915)'
+            : 'rgba(30,20,10,0.95)',
+          border: toast.type === 'added'
+            ? '1px solid var(--brand-emerald)'
+            : '1px solid rgba(255,255,255,0.1)',
+          borderRadius: '50px',
+          padding: '10px 18px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          boxShadow: toast.type === 'added'
+            ? '0 4px 20px rgba(5,196,139,0.35)'
+            : '0 4px 16px rgba(0,0,0,0.4)',
+          animation: 'slideUp 0.25s ease',
+          whiteSpace: 'nowrap',
+          maxWidth: '90vw',
+        }}>
+          {toast.type === 'added' ? (
+            <>
+              <CheckCircle size={15} style={{ color: 'var(--brand-emerald)', flexShrink: 0 }} />
+              <span style={{ fontSize: '0.8rem', color: '#fff', fontWeight: 600 }}>
+                {toast.team} <span style={{ color: 'var(--brand-emerald)' }}>@{toast.odd?.toFixed(2)}</span> added
+              </span>
+              <span style={{ color: 'var(--brand-emerald)', fontSize: '0.75rem', fontWeight: 700, marginLeft: '4px' }}>
+                → Bet Slip ✓
+              </span>
+            </>
+          ) : (
+            <>
+              <ShoppingBag size={14} style={{ color: 'var(--text-muted)' }} />
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Selection removed</span>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Promo Cards — Sports tab only */}
       {activeTab === 'Sports' && (
         <section className="promos-grid" style={{ marginBottom: '4px' }}>
           {PROMOTIONS.map((promo) => (
@@ -242,17 +299,10 @@ export default function MainDashboard({ matches, selectedSport, setSelectedSport
               </div>
               <button
                 style={{
-                  background: 'rgba(255,255,255,0.15)',
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  borderRadius: '4px',
-                  color: '#fff',
-                  fontSize: '0.72rem',
-                  padding: '4px 10px',
-                  width: 'fit-content',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  marginTop: '8px',
-                  transition: 'all 0.2s ease'
+                  background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.2)',
+                  borderRadius: '4px', color: '#fff', fontSize: '0.72rem',
+                  padding: '4px 10px', width: 'fit-content', cursor: 'pointer',
+                  fontWeight: 600, marginTop: '8px', transition: 'all 0.2s ease'
                 }}
                 onMouseEnter={(e) => e.target.style.background = 'var(--brand-yellow)'}
                 onMouseLeave={(e) => e.target.style.background = 'rgba(255,255,255,0.15)'}
@@ -274,7 +324,6 @@ export default function MainDashboard({ matches, selectedSport, setSelectedSport
           justifyContent: 'space-between',
           alignItems: 'center',
           borderRadius: '8px 8px 0 0',
-          marginBottom: '0',
         }}>
           <h3 style={{ fontSize: '0.9rem', fontFamily: 'var(--font-display)', display: 'flex', alignItems: 'center', gap: '7px', color: '#fff' }}>
             <Radio size={14} style={{ color: 'var(--live-green)', animation: activeTab === 'In-Play' ? 'pulse 1.5s infinite' : 'none' }} />
@@ -285,7 +334,7 @@ export default function MainDashboard({ matches, selectedSport, setSelectedSport
           </span>
         </div>
 
-        {/* Sport Filter Pills - horizontal scroll on mobile */}
+        {/* Sport Filter Pills */}
         <div className="sport-pills-container">
           {activeSports.map((pill) => {
             const isActive = selectedSport === pill.name;
@@ -306,17 +355,16 @@ export default function MainDashboard({ matches, selectedSport, setSelectedSport
         <div style={{ padding: '10px', display: 'flex', flexDirection: 'column' }}>
           {filteredMatches.length === 0 ? (
             <div style={{
-              padding: '40px 16px',
-              textAlign: 'center',
-              color: 'var(--text-muted)',
+              padding: '40px 16px', textAlign: 'center', color: 'var(--text-muted)',
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px'
             }}>
               <span style={{ fontSize: '2rem' }}>📭</span>
-              <span style={{ fontSize: '0.9rem' }}>No {activeTab === 'In-Play' ? 'live' : ''} matches for {selectedSport === 'All' ? 'this category' : selectedSport}</span>
+              <span style={{ fontSize: '0.9rem' }}>
+                No {activeTab === 'In-Play' ? 'live' : ''} matches for {selectedSport === 'All' ? 'this category' : selectedSport}
+              </span>
               <span style={{ fontSize: '0.75rem' }}>Try a different sport filter above</span>
             </div>
           ) : groupedMatches ? (
-            // In-Play grouped by sport
             Object.entries(groupedMatches).map(([sport, sportMatches]) => (
               <div key={sport} style={{ marginBottom: '16px' }}>
                 <div style={{
@@ -327,11 +375,9 @@ export default function MainDashboard({ matches, selectedSport, setSelectedSport
                   <span style={{ fontSize: '1rem' }}>{sportIcon(sport)}</span>
                   <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--brand-yellow)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{sport}</span>
                   <span style={{
-                    background: 'rgba(0,255,133,0.12)',
-                    color: 'var(--live-green)',
-                    fontSize: '0.6rem', fontWeight: 700,
-                    padding: '1px 6px', borderRadius: '8px',
-                    border: '1px solid rgba(0,255,133,0.2)'
+                    background: 'rgba(0,255,133,0.12)', color: 'var(--live-green)',
+                    fontSize: '0.6rem', fontWeight: 700, padding: '1px 6px',
+                    borderRadius: '8px', border: '1px solid rgba(0,255,133,0.2)'
                   }}>{sportMatches.length} LIVE</span>
                 </div>
                 {sportMatches.map(renderMatch)}
