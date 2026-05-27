@@ -21,7 +21,7 @@ export default function Header({ activeTab, setActiveTab, onOpenDeposit, onOpenA
   };
 
   return (
-    <header style={{
+    <header className="app-header" style={{
       background: 'linear-gradient(135deg, var(--brand-teal-deep) 0%, #080a0f 100%)',
       height: '56px',
       display: 'flex',
@@ -50,10 +50,10 @@ export default function Header({ activeTab, setActiveTab, onOpenDeposit, onOpenA
           }}
         >
           <BrandLogo />
-          <span>
+          <span className="logo-text">
             PREDICTO<span style={{ color: 'var(--brand-emerald)' }}>11</span>
           </span>
-          <span style={{ 
+          <span className="logo-badge" style={{ 
             fontSize: '0.55rem', 
             color: '#080a0f', 
             background: 'var(--brand-yellow)',
@@ -96,7 +96,7 @@ export default function Header({ activeTab, setActiveTab, onOpenDeposit, onOpenA
       </div>
 
       {/* Utilities & User Info */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+      <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
         {/* Search */}
         <div className="header-search">
           <Search size={16} style={{ color: 'rgba(255,255,255,0.4)', position: 'absolute', left: '10px' }} />
@@ -283,41 +283,16 @@ export default function Header({ activeTab, setActiveTab, onOpenDeposit, onOpenA
             )}
           </div>
         ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div className="header-auth-buttons" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <button 
               onClick={onOpenAuth}
-              style={{
-                background: 'transparent',
-                border: '1px solid var(--border-color)',
-                borderRadius: '6px',
-                color: '#ffffff',
-                padding: '6px 16px',
-                fontSize: '0.8rem',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.05)'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+              className="header-login-btn"
             >
               Log In
             </button>
             <button 
               onClick={onOpenAuth}
-              style={{
-                backgroundColor: 'var(--brand-emerald)',
-                border: 'none',
-                borderRadius: '6px',
-                color: '#080a0f',
-                padding: '7px 16px',
-                fontSize: '0.8rem',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                boxShadow: '0 4px 10px rgba(5, 196, 139, 0.25)'
-              }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = '#04b27d'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = 'var(--brand-emerald)'}
+              className="header-join-btn"
             >
               Join Now
             </button>

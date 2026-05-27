@@ -28,10 +28,16 @@
   --font-body: 'Inter', sans-serif;
 }
 
+html {
+  overflow-x: hidden;
+  width: 100%;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  max-width: 100%;
 }
 
 body {
@@ -41,6 +47,8 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
   /* Premium Dark Mesh Gradient Background */
   background: 
     radial-gradient(at 0% 0%, rgba(13, 35, 29, 0.5) 0px, transparent 50%), 
@@ -118,6 +126,9 @@ h1, h2, h3, h4, h5 {
   flex-direction: column;
   min-height: 100vh;
   position: relative;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 .main-layout {
@@ -126,6 +137,8 @@ h1, h2, h3, h4, h5 {
   flex-grow: 1;
   overflow: hidden;
   height: calc(100vh - 56px); /* Header height offset */
+  width: 100%;
+  max-width: 100%;
 }
 
 /* Base sidebars style without forcing layouts inline */
@@ -708,6 +721,39 @@ h1, h2, h3, h4, h5 {
 }
 
 /* Header Responsiveness Utility Classes */
+.header-login-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: #ffffff;
+  padding: 6px 16px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.header-login-btn:hover {
+  background-color: rgba(255,255,255,0.05);
+}
+
+.header-join-btn {
+  background-color: var(--brand-emerald);
+  border: none;
+  border-radius: 6px;
+  color: #080a0f;
+  padding: 7px 16px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 10px rgba(5, 196, 139, 0.25);
+  white-space: nowrap;
+}
+.header-join-btn:hover {
+  background-color: #04b27d;
+}
+
 .header-nav {
   display: flex;
   gap: 4px;
@@ -760,3 +806,30 @@ h1, h2, h3, h4, h5 {
     display: none !important;
   }
 }
+
+@media (max-width: 480px) {
+  .app-header {
+    padding: 0 8px !important;
+  }
+  .logo-text {
+    display: none !important;
+  }
+  .logo-badge {
+    display: none !important;
+  }
+  .header-right {
+    gap: 8px !important;
+  }
+  .header-auth-buttons {
+    gap: 6px !important;
+  }
+  .header-login-btn {
+    padding: 5px 10px;
+    font-size: 0.72rem;
+  }
+  .header-join-btn {
+    padding: 5px 10px;
+    font-size: 0.72rem;
+  }
+}
+
