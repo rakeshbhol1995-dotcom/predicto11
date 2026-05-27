@@ -95,40 +95,95 @@ export default function MatchTracker({ match }) {
         )}
 
         {match.sport === 'Cricket' && (
-          <>
-            <div style={{
-              position: 'absolute',
-              width: '90%',
-              height: '90%',
-              border: '1px dashed rgba(255,255,255,0.15)',
-              borderRadius: '50%'
-            }} />
-            <div style={{
-              position: 'absolute',
-              width: '24px',
-              height: '80px',
-              backgroundColor: '#e6a46e', // Wicket Pitch color
-              border: '1px solid rgba(255,255,255,0.2)',
-              transform: 'rotate(90deg)'
-            }} />
-          </>
+          <svg width="100%" height="100%" viewBox="0 0 240 150" style={{ position: 'absolute', top: 0, left: 0, overflow: 'visible' }}>
+            <defs>
+              <linearGradient id="stumpWood" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#d97706" />
+                <stop offset="50%" stopColor="#fbbf24" />
+                <stop offset="100%" stopColor="#92400e" />
+              </linearGradient>
+              <linearGradient id="wicketSoil" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#b49372" />
+                <stop offset="20%" stopColor="#dfbd99" />
+                <stop offset="50%" stopColor="#eed0b0" />
+                <stop offset="80%" stopColor="#dfbd99" />
+                <stop offset="100%" stopColor="#9a7b5a" />
+              </linearGradient>
+            </defs>
+
+            {/* Alternating mowed turf striping */}
+            <circle cx="120" cy="75" r="70" fill="none" stroke="rgba(255, 255, 255, 0.03)" strokeWidth="18" />
+            <circle cx="120" cy="75" r="50" fill="none" stroke="rgba(0, 0, 0, 0.08)" strokeWidth="12" />
+
+            {/* Boundary Rope with rope dashes */}
+            <ellipse cx="120" cy="75" rx="104" ry="64" stroke="rgba(255, 255, 255, 0.22)" strokeWidth="1.5" strokeDasharray="5 3" fill="none" />
+            <ellipse cx="120" cy="75" rx="104.5" ry="64.5" stroke="rgba(0, 0, 0, 0.15)" strokeWidth="1" fill="none" />
+
+            {/* 30-Yard Circle */}
+            <ellipse cx="120" cy="75" rx="76" ry="46" stroke="rgba(255, 255, 255, 0.12)" strokeWidth="1.2" strokeDasharray="3 4" fill="none" />
+
+            {/* Pitch (turf wicket) */}
+            <g transform="translate(120, 75) rotate(90)">
+              {/* Clay base */}
+              <rect x="-7" y="-22" width="14" height="44" fill="url(#wicketSoil)" rx="1" stroke="rgba(0,0,0,0.15)" strokeWidth="0.5" />
+              
+              {/* Crease lines */}
+              <line x1="-7" y1="-16" x2="7" y2="-16" stroke="#ffffff" strokeWidth="0.5" opacity="0.8" />
+              <line x1="-7" y1="16" x2="7" y2="16" stroke="#ffffff" strokeWidth="0.5" opacity="0.8" />
+              <line x1="-4" y1="-22" x2="-4" y2="-16" stroke="#ffffff" strokeWidth="0.4" opacity="0.6" />
+              <line x1="4" y1="-22" x2="4" y2="-16" stroke="#ffffff" strokeWidth="0.4" opacity="0.6" />
+              <line x1="-4" y1="16" x2="-4" y2="22" stroke="#ffffff" strokeWidth="0.4" opacity="0.6" />
+              <line x1="4" y1="16" x2="4" y2="22" stroke="#ffffff" strokeWidth="0.4" opacity="0.6" />
+
+              {/* 3D Stumps */}
+              {/* Top Wickets */}
+              <g transform="translate(0, -18)">
+                <rect x="-2.0" y="-0.4" width="0.5" height="0.8" fill="url(#stumpWood)" />
+                <rect x="-0.2" y="-0.4" width="0.5" height="0.8" fill="url(#stumpWood)" />
+                <rect x="1.5" y="-0.4" width="0.5" height="0.8" fill="url(#stumpWood)" />
+                <rect x="-2.2" y="-0.6" width="4.4" height="0.2" fill="#92400e" rx="0.1" />
+              </g>
+              {/* Bottom Wickets */}
+              <g transform="translate(0, 18)">
+                <rect x="-2.0" y="-0.4" width="0.5" height="0.8" fill="url(#stumpWood)" />
+                <rect x="-0.2" y="-0.4" width="0.5" height="0.8" fill="url(#stumpWood)" />
+                <rect x="1.5" y="-0.4" width="0.5" height="0.8" fill="url(#stumpWood)" />
+                <rect x="-2.2" y="-0.6" width="4.4" height="0.2" fill="#92400e" rx="0.1" />
+              </g>
+            </g>
+          </svg>
         )}
 
         {match.sport === 'Tennis' && (
-          <>
-            <div style={{
-              position: 'absolute',
-              width: '80%',
-              height: '70%',
-              border: '2px solid rgba(255,255,255,0.25)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <div style={{ height: '100%', borderLeft: '2px solid rgba(255,255,255,0.25)' }} />
-              <div style={{ position: 'absolute', width: '100%', borderBottom: '1.5px solid rgba(255,255,255,0.25)' }} />
-            </div>
-          </>
+          <svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0 }}>
+            {/* Outer court border */}
+            <rect x="10%" y="15%" width="80%" height="70%" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" fill="none" />
+            {/* Singles lines */}
+            <line x1="10%" y1="24%" x2="90%" y2="24%" stroke="rgba(255,255,255,0.25)" strokeWidth="1" />
+            <line x1="10%" y1="76%" x2="90%" y2="76%" stroke="rgba(255,255,255,0.25)" strokeWidth="1" />
+            {/* Net line in the middle */}
+            <line x1="50%" y1="15%" x2="50%" y2="85%" stroke="#ffffff" strokeWidth="2" opacity="0.9" />
+            {/* Service boxes */}
+            <line x1="28%" y1="24%" x2="28%" y2="76%" stroke="rgba(255,255,255,0.35)" strokeWidth="1.2" />
+            <line x1="72%" y1="24%" x2="72%" y2="76%" stroke="rgba(255,255,255,0.35)" strokeWidth="1.2" />
+            <line x1="28%" y1="50%" x2="72%" y2="50%" stroke="rgba(255,255,255,0.35)" strokeWidth="1.2" />
+          </svg>
+        )}
+
+        {match.sport === 'Basketball' && (
+          <svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0 }}>
+            {/* Court border */}
+            <rect x="5%" y="6%" width="90%" height="88%" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" fill="none" />
+            {/* Center line and circle */}
+            <line x1="50%" y1="6%" x2="50%" y2="94%" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" />
+            <circle cx="50%" cy="50%" r="16%" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" fill="none" />
+            {/* Three point arcs */}
+            <path d="M 5%,28% A 26%,26% 0 0,1 5%,72%" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" fill="none" />
+            <path d="M 95%,28% A 26%,26% 0 0,0 95%,72%" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" fill="none" />
+            {/* Key areas */}
+            <rect x="5%" y="37%" width="16%" height="26%" stroke="rgba(255,255,255,0.3)" strokeWidth="1" fill="none" />
+            <rect x="79%" y="37%" width="16%" height="26%" stroke="rgba(255,255,255,0.3)" strokeWidth="1" fill="none" />
+          </svg>
         )}
 
         {/* Dynamic Ball Position Tracker */}
@@ -136,14 +191,37 @@ export default function MatchTracker({ match }) {
           position: 'absolute',
           left: `${ballPos.x}%`,
           top: `${ballPos.y}%`,
-          width: '12px',
-          height: '12px',
-          backgroundColor: match.sport === 'Tennis' ? '#ccff00' : '#ffffff',
+          width: '13px',
+          height: '13px',
           borderRadius: '50%',
-          boxShadow: '0 0 10px 4px rgba(255,255,255,0.4)',
+          transform: 'translate(-50%, -50%)',
+          background: match.sport === 'Tennis' 
+            ? 'radial-gradient(circle at 35% 35%, #e1ff26 0%, #b5ce00 45%, #768700 85%, #465100 100%)' // realistic tennis ball yellow
+            : match.sport === 'Cricket'
+            ? 'radial-gradient(circle at 35% 35%, #ff4d4d 0%, #cc0606 40%, #8d0000 85%, #470000 100%)' // 3D cherry red cricket ball
+            : 'radial-gradient(circle at 35% 35%, #ffffff 0%, #d4d4d4 40%, #8a8a8a 85%, #444444 100%)', // 3D ball
+          boxShadow: match.sport === 'Tennis'
+            ? '0 0 10px 3px rgba(225,255,38,0.5)'
+            : match.sport === 'Cricket'
+            ? '0 0 10px 3px rgba(255,77,77,0.45)'
+            : '0 0 8px 2px rgba(255,255,255,0.45)',
           transition: 'all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-          zIndex: 4
-        }} />
+          zIndex: 4,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden'
+        }}>
+          {match.sport === 'Cricket' && (
+            <div style={{
+              width: '100%',
+              height: '1.2px',
+              background: 'rgba(255,255,255,0.85)',
+              boxShadow: '0 0.5px 0.5px rgba(0,0,0,0.3)',
+              transform: 'rotate(45deg)'
+            }} />
+          )}
+        </div>
 
         {/* Event Status overlay overlay */}
         <div style={{
