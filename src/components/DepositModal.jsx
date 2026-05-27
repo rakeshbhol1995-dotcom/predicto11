@@ -5,21 +5,34 @@ import { X, Copy, Check, Coins, ArrowRightLeft, QrCode, Landmark, Wallet, Upload
 export default function DepositModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
-  const { selectedFiat, fiatSymbol, depositCrypto, depositFiat } = useBet();
+  const { selectedFiat, fiatSymbol, submitDepositRequest } = useBet();
   const [methodTab, setMethodTab] = useState(selectedFiat === 'INR' ? 'local' : 'crypto'); // 'local' or 'crypto'
   const [localMethod, setLocalMethod] = useState('upi'); // 'upi' or 'bank'
   const [selectedAsset, setSelectedAsset] = useState('USDT');
+  const [selectedNetwork, setSelectedNetwork] = useState('TRC20'); // For crypto network
   const [amount, setAmount] = useState('');
   const [utrNumber, setUtrNumber] = useState('');
+  const [txHash, setTxHash] = useState(''); // Transaction Hash/TxID
   const [screenshotName, setScreenshotName] = useState('');
   const [copied, setCopied] = useState(false);
   const [success, setSuccess] = useState(false);
   const [verifying, setVerifying] = useState(false);
 
-  const getMockAddress = (asset) => {
-    if (asset === 'USDT') return '0x71C5...6974 (ERC20)';
+  const AGENTS = [
+    { name: 'Rohit Kumar', upi: 'rohit.predicto@ybl', speed: '2 mins', rate: '100%' },
+    { name: 'Sneha Patel', upi: 'sneha.predicto@paytm', speed: '5 mins', rate: '99%' },
+    { name: 'Vikram Singh', upi: 'vikram.predicto@okhdfc', speed: '1 min', rate: '100%' }
+  ];
+  const [selectedAgent, setSelectedAgent] = useState(AGENTS[0]);
+
+  const getMockAddress = (asset, network = 'TRC20') => {
+    if (asset === 'USDT') {
+      if (network === 'TRC20') return 'TY3B19fMhWnD6b3Xz8Kq10098fS2c90';
+      if (network === 'ERC20') return '0x71C569743a829e1fb428e932b1cb417281facf9a1';
+      return '0x2918384df9a1b1cb417281fa093c859d04b6a93e (BSC)';
+    }
     if (asset === 'BTC') return '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa';
-    return '0x291...384d (Arbitrum One)';
+    return '0x71C569743a829e1fb428e932b1cb417281facf9a1'; // ETH
   };
 
   const handleCopy = (text) => {
@@ -41,24 +54,26 @@ export default function DepositModal({ isOpen, onClose }) {
     // Simulate real bank/node verification
     setTimeout(() => {
       setVerifying(false);
-      let res = false;
-      if (methodTab === 'local') {
-        res = depositFiat(amount);
-      } else {
-        res = depositCrypto(selectedAsset, amount);
-      }
+      
+      const methodLabel = methodTab === 'local'
+        ? `UPI (Agent: ${selectedAgent.name})`
+        : `Crypto (${selectedAsset} - ${selectedNetwork})`;
 
-      if (res) {
+      const refValue = methodTab === 'local' ? utrNumber : txHash;
+      const res = submitDepositRequest(methodLabel, amount, refValue, screenshotName);
+
+      if (res.success) {
         setSuccess(true);
         setTimeout(() => {
           setSuccess(false);
           setAmount('');
           setUtrNumber('');
+          setTxHash('');
           setScreenshotName('');
           onClose();
-        }, 2000);
+        }, 3000);
       }
-    }, 1800);
+    }, 1500);
   };
 
   return (
@@ -119,9 +134,9 @@ export default function DepositModal({ isOpen, onClose }) {
               borderRadius: '50%',
               animation: 'spin 1s linear infinite'
             }} />
-            <h4 style={{ color: '#ffffff' }}>Verifying Transaction...</h4>
+            <h4 style={{ color: '#ffffff' }}>Routing to P2P Agent...</h4>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-              Our automated node is matching your UTR reference against incoming payments. Please hold on...
+              Transmitting your deposit receipt details to the selected P2P cashier agent. Please hold on...
             </p>
           </div>
         )}
@@ -151,9 +166,9 @@ export default function DepositModal({ isOpen, onClose }) {
             }}>
               ✓
             </div>
-            <h4 style={{ color: '#ffffff', fontSize: '1.2rem' }}>Deposit Confirmed!</h4>
+            <h4 style={{ color: '#ffffff', fontSize: '1.2rem' }}>Request Submitted!</h4>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-              Added {methodTab === 'local' ? `${fiatSymbol}${parseFloat(amount).toLocaleString()}` : `${amount} ${selectedAsset}`} to your wallet balance.
+              Your request for {methodTab === 'local' ? `${fiatSymbol}${parseFloat(amount).toLocaleString()}` : `${amount} ${selectedAsset}`} has been sent. The agent will verify the reference and release your balance shortly.
             </p>
           </div>
         )}
@@ -254,6 +269,48 @@ export default function DepositModal({ isOpen, onClose }) {
                   </button>
                 </div>
 
+                {/* Agent Selector Card Grid */}
+                {localMethod === 'upi' && (
+                  <div>
+                    <label style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>
+                      Select Active P2P Agent
+                    </label>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                      {AGENTS.map((agent) => {
+                        const isSel = selectedAgent.name === agent.name;
+                        return (
+                          <div
+                            key={agent.name}
+                            onClick={() => setSelectedAgent(agent)}
+                            style={{
+                              backgroundColor: isSel ? 'rgba(5, 196, 139, 0.12)' : 'var(--bg-card)',
+                              border: isSel ? '1.5px solid var(--brand-emerald)' : '1px solid var(--border-color)',
+                              borderRadius: '8px',
+                              padding: '8px',
+                              cursor: 'pointer',
+                              textAlign: 'center',
+                              transition: 'all 0.2s',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '2px'
+                            }}
+                          >
+                            <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: isSel ? 'var(--brand-emerald)' : '#ffffff' }}>
+                              {agent.name.split(' ')[0]}
+                            </span>
+                            <span style={{ fontSize: '0.58rem', color: 'var(--brand-yellow)' }}>
+                              ⚡ {agent.speed}
+                            </span>
+                            <span style={{ fontSize: '0.55rem', color: 'var(--text-muted)' }}>
+                              {agent.rate} release
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Sub-view: UPI Scanner */}
                 {localMethod === 'upi' ? (
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
@@ -278,21 +335,21 @@ export default function DepositModal({ isOpen, onClose }) {
                     </div>
 
                     <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.03)', padding: '6px 10px', borderRadius: '4px' }}>
-                      <div style={{ minWidth: 0 }}>
-                        <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>UPI ID:</span>
-                        <p style={{ fontSize: '0.8rem', color: '#ffffff', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis' }}>predicto11@icici</p>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>UPI ID (Agent {selectedAgent.name}):</span>
+                        <p style={{ fontSize: '0.78rem', color: '#ffffff', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedAgent.upi}</p>
                       </div>
                       <button
                         type="button"
-                        onClick={() => handleCopy('predicto11@icici')}
-                        style={{ border: 'none', background: 'none', color: 'var(--brand-emerald)', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600 }}
+                        onClick={() => handleCopy(selectedAgent.upi)}
+                        style={{ border: 'none', background: 'none', color: 'var(--brand-emerald)', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600, flexShrink: 0, paddingLeft: '8px' }}
                       >
                         {copied ? 'Copied' : 'Copy'}
                       </button>
                     </div>
 
                     <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textAlign: 'center', margin: '0 4px' }}>
-                      💡 Scan using GPay, PhonePe, Paytm, or BHIM. Send money and submit UTR/Ref below.
+                      💡 Scan QR or pay to UPI. Upload receipt & enter the 12-digit UTR below.
                     </p>
                   </div>
                 ) : (
@@ -406,8 +463,7 @@ export default function DepositModal({ isOpen, onClose }) {
 
               </div>
             )}
-
-            {/* CASE B: Crypto Deposit Network */}
+                  {/* CASE B: Crypto Deposit Network */}
             {methodTab === 'crypto' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 <div>
@@ -448,6 +504,43 @@ export default function DepositModal({ isOpen, onClose }) {
                   </div>
                 </div>
 
+                {/* Network Selection for USDT */}
+                {selectedAsset === 'USDT' && (
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>
+                      Select Deposit Network
+                    </label>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      {['TRC20', 'ERC20', 'BSC'].map((net) => {
+                        const isSel = selectedNetwork === net;
+                        return (
+                          <button
+                            key={net}
+                            type="button"
+                            onClick={() => setSelectedNetwork(net)}
+                            style={{
+                              flex: 1,
+                              padding: '6px 8px',
+                              backgroundColor: isSel ? 'rgba(5, 196, 139, 0.1)' : 'transparent',
+                              border: `1.5px solid ${isSel ? 'var(--brand-emerald)' : 'var(--border-color)'}`,
+                              borderRadius: '6px',
+                              color: isSel ? 'var(--brand-emerald)' : '#ffffff',
+                              fontSize: '0.72rem',
+                              fontWeight: 600,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            {net} {net === 'TRC20' ? '(TRON)' : net === 'ERC20' ? '(Ethereum)' : '(BNB Chain)'}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <span style={{ fontSize: '0.62rem', color: 'var(--live-red)', marginTop: '4px', display: 'block' }}>
+                      ⚠️ Send only USDT to this address. Sending other assets will cause permanent loss.
+                    </span>
+                  </div>
+                )}
+
                 {/* QR Code and Address */}
                 <div style={{ 
                   display: 'flex', 
@@ -470,32 +563,39 @@ export default function DepositModal({ isOpen, onClose }) {
                     justifyContent: 'center',
                     flexShrink: 0
                   }}>
-                    <div style={{
-                      width: '100%',
-                      height: '100%',
-                      backgroundImage: 'radial-gradient(#10211a 30%, transparent 35%)',
-                      backgroundSize: '8px 8px'
-                    }} />
+                    {/* QR Code SVG representation */}
+                    <svg width="60" height="60" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect width="100" height="100" fill="white"/>
+                      <rect x="5" y="5" width="20" height="20" stroke="black" strokeWidth="6" fill="none"/>
+                      <rect x="10" y="10" width="10" height="10" fill="black"/>
+                      <rect x="75" y="5" width="20" height="20" stroke="black" strokeWidth="6" fill="none"/>
+                      <rect x="80" y="10" width="10" height="10" fill="black"/>
+                      <rect x="5" y="75" width="20" height="20" stroke="black" strokeWidth="6" fill="none"/>
+                      <rect x="10" y="80" width="10" height="10" fill="black"/>
+                      <path d="M35 15h5v5h-5zm10 0h5v5h-5zm10 0h5v5h-5zm0 10h5v5h-5zm-10 10h5v5h-5zm-10 10h5v5h-5zm20 0h5v5h-5zm10 0h5v5h-5zm10 0h5v5h-5zm0 10h5v5h-5zm-15 10h5v5h-5zm-15 10h5v5h-5zm10 0h5v5h-5zm10 0h5v5h-5z" fill="black"/>
+                      <path d="M35 35h15v5H35zm0 15h10v5H35zm30 15h15v5H65zm0 10h10v5H65z" fill="black"/>
+                    </svg>
                   </div>
 
                   <div style={{ flexGrow: 1, minWidth: 0 }}>
                     <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                      Deposit Address
+                      {selectedAsset} Address ({selectedAsset === 'USDT' ? selectedNetwork : 'Native'})
                     </span>
                     <p style={{ 
                       color: '#ffffff', 
-                      fontSize: '0.8rem', 
+                      fontSize: '0.75rem', 
                       fontWeight: 600, 
                       overflow: 'hidden', 
                       textOverflow: 'ellipsis', 
                       whiteSpace: 'nowrap',
-                      marginTop: '2px'
-                    }}>
-                      {getMockAddress(selectedAsset)}
+                      marginTop: '2px',
+                      fontFamily: 'monospace'
+                    }} title={getMockAddress(selectedAsset, selectedNetwork)}>
+                      {getMockAddress(selectedAsset, selectedNetwork)}
                     </p>
                     <button
                       type="button"
-                      onClick={() => handleCopy(getMockAddress(selectedAsset))}
+                      onClick={() => handleCopy(getMockAddress(selectedAsset, selectedNetwork))}
                       style={{
                         background: 'none',
                         border: 'none',
@@ -572,6 +672,30 @@ export default function DepositModal({ isOpen, onClose }) {
                     </span>
                   </div>
                 )}
+
+                {/* TxID / TxHash reference */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                    Transaction Hash / TxID
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Enter blockchain transaction hash / TxID"
+                    value={txHash}
+                    onChange={(e) => setTxHash(e.target.value.trim())}
+                    required
+                    style={{
+                      width: '100%',
+                      backgroundColor: 'var(--bg-card)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '8px',
+                      padding: '10px 12px',
+                      color: '#ffffff',
+                      fontSize: '0.85rem',
+                      outline: 'none'
+                    }}
+                  />
+                </div>
               </div>
             )}
 

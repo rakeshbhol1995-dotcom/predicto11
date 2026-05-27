@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useBet } from '../context/BetContext';
-import { Settings, Award, FileText, Users, Play, PenTool } from 'lucide-react';
+import { Settings, Award, FileText, Users, Play, PenTool, Landmark } from 'lucide-react';
 
 const AdminCustomLogo = () => (
   <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ filter: 'drop-shadow(0 0 8px rgba(171, 71, 188, 0.5))' }}>
@@ -11,8 +11,8 @@ const AdminCustomLogo = () => (
 );
 
 export default function AdminPanel({ matches, onUpdateMatches }) {
-  const { usersList, placedBets, fiatSymbol, convertUsdtToFiat } = useBet();
-  const [activeSubTab, setActiveSubTab] = useState('matches'); // 'matches' | 'users' | 'bets'
+  const { usersList, placedBets, fiatSymbol, convertUsdtToFiat, depositRequests, approveDepositRequest, rejectDepositRequest } = useBet();
+  const [activeSubTab, setActiveSubTab] = useState('matches'); // 'matches' | 'users' | 'bets' | 'deposits'
 
   // Match edit state
   const [editingId, setEditingId] = useState(null);
@@ -137,7 +137,25 @@ export default function AdminPanel({ matches, onUpdateMatches }) {
             gap: '6px'
           }}
         >
-          <FileText size={14} /> Bets Ledger Ledger
+          <FileText size={14} /> Bets Ledger
+        </button>
+        <button
+          onClick={() => setActiveSubTab('deposits')}
+          style={{
+            backgroundColor: activeSubTab === 'deposits' ? '#ab47bc' : 'rgba(255,255,255,0.03)',
+            color: '#ffffff',
+            border: 'none',
+            borderRadius: '6px',
+            padding: '8px 16px',
+            fontSize: '0.8rem',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+        >
+          <Landmark size={14} /> P2P Deposit Requests
         </button>
       </div>
 
@@ -344,6 +362,101 @@ export default function AdminPanel({ matches, onUpdateMatches }) {
                 ))}
               </tbody>
             </table>
+          )}
+        </div>
+      )}
+
+      {/* Tab 4: P2P Deposits Manager */}
+      {activeSubTab === 'deposits' && (
+        <div className="card-panel" style={{ padding: '16px' }}>
+          <h3 style={{ fontSize: '1rem', color: '#ffffff', marginBottom: '12px' }}>P2P Deposit Approvals Manager</h3>
+          {depositRequests.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>
+              No deposit requests found in the ledger database.
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
+                    <th style={{ padding: '10px' }}>Request ID</th>
+                    <th style={{ padding: '10px' }}>User</th>
+                    <th style={{ padding: '10px' }}>Method</th>
+                    <th style={{ padding: '10px' }}>Amount</th>
+                    <th style={{ padding: '10px' }}>Reference (UTR / TxHash)</th>
+                    <th style={{ padding: '10px' }}>Date</th>
+                    <th style={{ padding: '10px' }}>Status</th>
+                    <th style={{ padding: '10px', textAlign: 'center' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {depositRequests.map((req) => (
+                    <tr key={req.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                      <td style={{ padding: '10px', fontSize: '0.7rem', color: 'var(--text-muted)' }}>{req.id}</td>
+                      <td style={{ padding: '10px', fontWeight: 600 }}>{req.username}</td>
+                      <td style={{ padding: '10px' }}>{req.method}</td>
+                      <td style={{ padding: '10px', color: 'var(--brand-yellow)', fontWeight: 600 }}>
+                        {req.method.includes('Crypto') ? `${req.amount} USDT/Token` : `${fiatSymbol}${req.amount.toLocaleString()}`}
+                      </td>
+                      <td style={{ padding: '10px', fontFamily: 'monospace', fontSize: '0.7rem', color: '#ffffff', maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={req.utr}>
+                        {req.utr}
+                      </td>
+                      <td style={{ padding: '10px', color: 'var(--text-muted)' }}>{req.date}</td>
+                      <td style={{ padding: '10px' }}>
+                        <span style={{ 
+                          fontSize: '0.65rem', 
+                          backgroundColor: req.status === 'approved' ? 'rgba(5, 196, 139, 0.15)' : req.status === 'rejected' ? 'rgba(255, 62, 108, 0.15)' : 'rgba(255, 215, 0, 0.15)',
+                          color: req.status === 'approved' ? 'var(--brand-emerald)' : req.status === 'rejected' ? 'var(--live-red)' : 'var(--brand-gold)',
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          fontWeight: 'bold'
+                        }}>
+                          {req.status.toUpperCase()}
+                        </span>
+                      </td>
+                      <td style={{ padding: '10px', display: 'flex', gap: '6px', justifyContent: 'center' }}>
+                        {req.status === 'pending' ? (
+                          <>
+                            <button
+                              onClick={() => approveDepositRequest(req.id)}
+                              style={{
+                                backgroundColor: 'var(--brand-emerald)',
+                                border: 'none',
+                                color: '#080a0f',
+                                padding: '5px 10px',
+                                borderRadius: '4px',
+                                fontWeight: 'bold',
+                                cursor: 'pointer',
+                                fontSize: '0.7rem'
+                              }}
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => rejectDepositRequest(req.id)}
+                              style={{
+                                backgroundColor: 'var(--live-red)',
+                                border: 'none',
+                                color: '#ffffff',
+                                padding: '5px 10px',
+                                borderRadius: '4px',
+                                fontWeight: 'bold',
+                                cursor: 'pointer',
+                                fontSize: '0.7rem'
+                              }}
+                            >
+                              Reject
+                            </button>
+                          </>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>Settled</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       )}

@@ -159,28 +159,79 @@ export const BetProvider = ({ children }) => {
     setSelections([]);
   };
 
-  // Deposit crypto asset
-  const depositCrypto = (asset, amount) => {
-    const amt = parseFloat(amount);
-    if (isNaN(amt) || amt <= 0) return false;
-    
-    const lowerAsset = asset.toLowerCase();
-    setCryptoBalances(prev => ({
-      ...prev,
-      [lowerAsset]: parseFloat((prev[lowerAsset] + amt).toFixed(6))
-    }));
+  // Deposit requests list for P2P/Agent workflow
+  const [depositRequests, setDepositRequests] = useState([
+    {
+      id: 'dep-101',
+      username: 'Bunty',
+      method: 'UPI (Agent: Rohit Kumar)',
+      amount: 1500,
+      utr: '983625417281',
+      screenshot: 'receipt1.png',
+      status: 'pending',
+      date: '2026-05-27 10:15 AM'
+    },
+    {
+      id: 'dep-102',
+      username: 'Bunty',
+      method: 'Crypto (USDT)',
+      amount: 50,
+      utr: '0x3a829e1fb428e932b1cb417281fa093c859d04b6a93e8e63e26217281facf9a1',
+      screenshot: '',
+      status: 'pending',
+      date: '2026-05-27 11:30 AM'
+    }
+  ]);
+
+  // Submit a pending deposit request
+  const submitDepositRequest = (method, amount, utr, screenshot = '') => {
+    if (!user) return { success: false, message: "Please log in to deposit." };
+    const amtNum = parseFloat(amount);
+    if (isNaN(amtNum) || amtNum <= 0) return { success: false, message: "Invalid amount." };
+
+    const newReq = {
+      id: `dep-${Date.now()}`,
+      username: user.username,
+      method,
+      amount: amtNum,
+      utr,
+      screenshot,
+      status: 'pending',
+      date: new Date().toLocaleString()
+    };
+
+    setDepositRequests(prev => [newReq, ...prev]);
+    return { success: true };
+  };
+
+  // Approve a pending deposit request (Admin only)
+  const approveDepositRequest = (reqId) => {
+    const req = depositRequests.find(r => r.id === reqId);
+    if (!req || req.status !== 'pending') return false;
+
+    // Credit balance
+    if (req.method.includes('Crypto') || req.method.includes('USDT') || req.method.includes('BTC') || req.method.includes('ETH')) {
+      const asset = req.method.includes('USDT') ? 'usdt' : req.method.includes('BTC') ? 'btc' : 'eth';
+      setCryptoBalances(prev => ({
+        ...prev,
+        [asset]: parseFloat((prev[asset] + req.amount).toFixed(6))
+      }));
+    } else {
+      // Local/fiat currency
+      const usdtAmt = req.amount / EXCHANGE_RATES.USDT[selectedFiat];
+      setCryptoBalances(prev => ({
+        ...prev,
+        usdt: parseFloat((prev.usdt + usdtAmt).toFixed(6))
+      }));
+    }
+
+    setDepositRequests(prev => prev.map(r => r.id === reqId ? { ...r, status: 'approved' } : r));
     return true;
   };
 
-  // Deposit fiat (converted to USDT balance)
-  const depositFiat = (amount) => {
-    const amt = parseFloat(amount);
-    if (isNaN(amt) || amt <= 0) return false;
-    const usdtAmt = amt / EXCHANGE_RATES.USDT[selectedFiat];
-    setCryptoBalances(prev => ({
-      ...prev,
-      usdt: parseFloat((prev.usdt + usdtAmt).toFixed(6))
-    }));
+  // Reject a pending deposit request (Admin only)
+  const rejectDepositRequest = (reqId) => {
+    setDepositRequests(prev => prev.map(r => r.id === reqId ? { ...r, status: 'rejected' } : r));
     return true;
   };
 
@@ -309,8 +360,10 @@ export const BetProvider = ({ children }) => {
         clearSlip,
         placeBet,
         cashOutBet,
-        depositCrypto,
-        depositFiat
+        depositRequests,
+        submitDepositRequest,
+        approveDepositRequest,
+        rejectDepositRequest
       }}
     >
       {children}
