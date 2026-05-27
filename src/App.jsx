@@ -239,6 +239,7 @@ function MainAppContent() {
             <MainDashboard
               matches={matches}
               selectedSport={selectedSport}
+              setSelectedSport={setSelectedSport}
               activeTab={activeTab}
               oddsFlash={oddsFlash}
               onSelectMatch={handleSelectMatch}

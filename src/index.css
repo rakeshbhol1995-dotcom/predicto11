@@ -102,6 +102,16 @@ h1, h2, h3, h4, h5 {
   animation: flashRed 1s ease;
 }
 
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
 /* Main Grid Layout */
 .app-container {
   display: flex;
@@ -138,13 +148,128 @@ h1, h2, h3, h4, h5 {
   background-color: var(--bg-panel);
 }
 
-/* Match schedule rows responsive styling */
-.promos-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 16px;
+/* ===== DASHBOARD MAIN ===== */
+.dashboard-main {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px;
+  overflow-y: auto;
+  height: 100%;
+  background-color: var(--bg-dark);
 }
 
+/* Promo Cards */
+.promos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* ===== SPORT FILTER PILLS ===== */
+.sport-pills-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  background: rgba(8, 12, 20, 0.6);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.sport-pills-container::-webkit-scrollbar { display: none; }
+
+.sport-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.18s ease;
+  font-family: var(--font-body);
+  flex-shrink: 0;
+}
+.sport-pill:hover {
+  background: rgba(255,255,255,0.09);
+  color: #fff;
+  border-color: rgba(255,255,255,0.2);
+}
+.sport-pill-active {
+  background: rgba(198, 255, 0, 0.12) !important;
+  border-color: var(--brand-yellow) !important;
+  color: var(--brand-yellow) !important;
+  font-weight: 700;
+}
+
+/* ===== MATCH CARD ===== */
+.match-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.match-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.3);
+}
+
+/* ===== ODDS BUTTONS (new responsive design) ===== */
+.match-odds-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 2px;
+  padding-bottom: 10px;
+}
+
+.odds-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 7px 4px;
+  background: var(--bg-odds);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  min-width: 0;
+}
+.odds-btn:hover {
+  background: var(--bg-odds-hover);
+  border-color: rgba(255,255,255,0.18);
+  transform: translateY(-1px);
+}
+.odds-btn-selected {
+  background: rgba(198,255,0,0.1) !important;
+  border-color: var(--brand-yellow) !important;
+}
+.odds-label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.odds-value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-main);
+  font-family: var(--font-display);
+}
+.odds-btn-selected .odds-value {
+  color: var(--brand-yellow);
+}
+
+/* Legacy - keep for MatchDetailView */
 .match-row {
   display: flex;
   align-items: center;
@@ -155,12 +280,7 @@ h1, h2, h3, h4, h5 {
   cursor: pointer;
   gap: 12px;
 }
-
-.match-info {
-  flex: 1;
-  min-width: 150px;
-}
-
+.match-info { flex: 1; min-width: 150px; }
 .match-odds-container {
   display: flex;
   gap: 8px;
@@ -175,23 +295,31 @@ h1, h2, h3, h4, h5 {
   gap: 24px;
 }
 
-/* Responsive constraints */
+/* ===== RESPONSIVE BREAKPOINTS ===== */
 @media (max-width: 1280px) {
   .main-layout {
     grid-template-columns: 220px 1fr;
   }
   .right-sidebar {
-    display: none !important; /* Hide match tracker/slip on sidebar */
+    display: none !important;
   }
 }
 
 @media (max-width: 768px) {
   .main-layout {
     grid-template-columns: 1fr;
-    height: calc(100vh - 112px); /* Header + Bottom Nav offset */
+    height: calc(100vh - 112px);
   }
   .left-sidebar {
     display: none !important;
+  }
+  .dashboard-main {
+    padding: 10px;
+    gap: 10px;
+  }
+  .promos-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 }
 
@@ -202,23 +330,28 @@ h1, h2, h3, h4, h5 {
   }
 }
 
-@media (max-width: 580px) {
+@media (max-width: 480px) {
+  .match-odds-row {
+    gap: 5px;
+  }
+  .odds-btn {
+    padding: 6px 2px;
+  }
+  .odds-value {
+    font-size: 0.82rem;
+  }
   .match-row {
     flex-direction: column;
     align-items: stretch;
     padding: 12px;
     gap: 10px;
   }
-  .match-info {
-    min-width: unset;
-  }
+  .match-info { min-width: unset; }
   .match-odds-container {
     justify-content: space-between;
     width: 100%;
   }
-  .match-odds-container button {
-    flex: 1;
-  }
+  .match-odds-container button { flex: 1; }
 }
 
 /* Common Classes */
