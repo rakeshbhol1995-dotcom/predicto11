@@ -206,20 +206,40 @@ export default function Header({ activeTab, setActiveTab, onOpenDeposit, onOpenA
               display: 'flex', 
               alignItems: 'center', 
               gap: '10px', 
-              background: 'rgba(0,0,0,0.3)', 
-              padding: '4px 12px', 
+              background: 'rgba(0,0,0,0.35)', 
+              padding: '6px 12px', 
               borderRadius: '8px',
-              border: '1px solid rgba(255,255,255,0.05)'
+              border: '1px solid rgba(255,255,255,0.08)'
             }}>
-              <Wallet size={16} style={{ color: 'var(--brand-emerald)' }} />
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                <span className="wallet-title">FIAT BALANCE</span>
-                <span style={{ fontSize: '0.95rem', color: 'var(--brand-yellow)', fontWeight: 'bold', fontFamily: 'var(--font-display)' }}>
-                  {fiatSymbol}{balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </span>
-                <span className="wallet-sub-balance">
-                  USDT: {cryptoBalances.usdt.toFixed(2)} | BTC: {cryptoBalances.btc.toFixed(4)}
-                </span>
+              <Wallet size={15} style={{ color: 'var(--brand-emerald)', flexShrink: 0 }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {/* INR Balance */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                  <span style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.4)', fontWeight: 'bold' }}>INR:</span>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--brand-yellow)', fontWeight: 'bold', fontFamily: 'var(--font-display)' }}>
+                    {fiatSymbol}{balance.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                  </span>
+                </div>
+                
+                <span style={{ color: 'rgba(255,255,255,0.15)', fontSize: '0.75rem' }}>|</span>
+                
+                {/* USDT Balance */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                  <span style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.4)', fontWeight: 'bold' }}>USDT:</span>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--brand-emerald)', fontWeight: 'bold', fontFamily: 'var(--font-display)' }}>
+                    ${cryptoBalances.usdt.toFixed(1)}
+                  </span>
+                </div>
+
+                {/* BTC Balance (Hidden on Small Screens via CSS class) */}
+                <span className="desktop-only-divider" style={{ color: 'rgba(255,255,255,0.15)', fontSize: '0.75rem' }}>|</span>
+                
+                <div className="desktop-only-btc" style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                  <span style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.4)', fontWeight: 'bold' }}>BTC:</span>
+                  <span style={{ fontSize: '0.85rem', color: '#ff9800', fontWeight: 'bold', fontFamily: 'var(--font-display)' }}>
+                    {cryptoBalances.btc.toFixed(4)}
+                  </span>
+                </div>
               </div>
               <button 
                 onClick={onOpenDeposit}
@@ -228,19 +248,20 @@ export default function Header({ activeTab, setActiveTab, onOpenDeposit, onOpenA
                   background: 'var(--brand-emerald)',
                   border: 'none',
                   borderRadius: '4px',
-                  width: '22px',
-                  height: '22px',
+                  width: '20px',
+                  height: '20px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'pointer',
-                  marginLeft: '6px',
+                  marginLeft: '4px',
                   color: '#080a0f',
                   transition: 'all 0.2s ease',
-                  boxShadow: '0 2px 6px rgba(5, 196, 139, 0.3)'
+                  boxShadow: '0 2px 6px rgba(5, 196, 139, 0.3)',
+                  flexShrink: 0
                 }}
               >
-                <Plus size={14} strokeWidth={3} />
+                <Plus size={12} strokeWidth={3} />
               </button>
             </div>
 

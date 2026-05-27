@@ -335,6 +335,15 @@ export const BetProvider = ({ children }) => {
     );
   };
 
+  const updateUserBalances = (usdt, btc, eth) => {
+    setCryptoBalances({
+      usdt: parseFloat(usdt) || 0,
+      btc: parseFloat(btc) || 0,
+      eth: parseFloat(eth) || 0
+    });
+    return { success: true };
+  };
+
   return (
     <BetContext.Provider
       value={{
@@ -363,7 +372,8 @@ export const BetProvider = ({ children }) => {
         depositRequests,
         submitDepositRequest,
         approveDepositRequest,
-        rejectDepositRequest
+        rejectDepositRequest,
+        updateUserBalances
       }}
     >
       {children}

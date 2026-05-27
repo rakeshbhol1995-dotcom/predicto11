@@ -13,8 +13,8 @@ const LiveChatCustomLogo = () => (
 export default function LiveChat({ matches = [] }) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { sender: 'agent', text: 'Hello Bunty! Welcome to Predicto11 Live Help Chat.' },
-    { sender: 'agent', text: "How can I help you? Try asking me for match tips (e.g. 'csk vs mi prediction', 'give me a tip', 'who will win') or keywords like 'deposit', 'withdraw', 'bets'!" }
+    { sender: 'agent', text: 'Hello! Welcome to Predicto11 Live Support. Agent Bunty is online to assist you.' },
+    { sender: 'agent', text: "How can I help you? Try asking me for match tips (e.g. 'csk vs mi prediction') or keywords like 'deposit', 'withdraw', 'bets'!" }
   ]);
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef(null);
@@ -86,22 +86,50 @@ We suggest betting on ${liveMatch.odds.home < liveMatch.odds.away ? liveMatch.ho
       {isOpen ? (
         <div className="chat-window">
           {/* Chat Header */}
-          <div className="chat-header">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{
-                width: '8px',
-                height: '8px',
-                backgroundColor: 'var(--live-green)',
-                borderRadius: '50%',
-                display: 'inline-block'
-              }} />
-              <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#ffffff' }}>Predicto11 Live Chat Support</span>
+          <div className="chat-header" style={{
+            background: 'linear-gradient(90deg, #10b981 0%, #059669 100%)',
+            padding: '12px 16px',
+            borderTopLeftRadius: '12px',
+            borderTopRightRadius: '12px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ position: 'relative' }}>
+                <div style={{
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '50%',
+                  backgroundColor: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: '900',
+                  color: '#059669',
+                  fontSize: '0.85rem',
+                  border: '1.5px solid #ffffff'
+                }}>B</div>
+                <span style={{
+                  width: '8px',
+                  height: '8px',
+                  backgroundColor: '#34d399',
+                  borderRadius: '50%',
+                  position: 'absolute',
+                  bottom: 0,
+                  right: 0,
+                  border: '1.5px solid #059669'
+                }} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: '800', color: '#ffffff', lineHeight: 1.2 }}>Agent Bunty</span>
+                <span style={{ fontSize: '0.62rem', color: '#d1fae5', opacity: 0.9 }}>Support Specialist (Online)</span>
+              </div>
             </div>
             <button 
               onClick={() => setIsOpen(false)}
-              style={{ background: 'none', border: 'none', color: '#ffffff', cursor: 'pointer' }}
+              style={{ background: 'none', border: 'none', color: '#ffffff', cursor: 'pointer', opacity: 0.8 }}
+              onMouseEnter={(e) => e.target.style.opacity = '1'}
+              onMouseLeave={(e) => e.target.style.opacity = '0.8'}
             >
-              <X size={16} />
+              <X size={18} />
             </button>
           </div>
 
