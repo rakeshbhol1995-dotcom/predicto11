@@ -2,7 +2,7 @@ import React from 'react';
 import { SPORTS_LIST } from '../data/mockData';
 import { Flame, Award, TrendingUp, Trophy } from 'lucide-react';
 
-export default function Sidebar({ selectedSport, setSelectedSport }) {
+export default function Sidebar({ selectedSport, setSelectedSport, matches = [] }) {
   return (
     <aside className="left-sidebar">
       {/* Popular Events Section */}
@@ -96,6 +96,7 @@ export default function Sidebar({ selectedSport, setSelectedSport }) {
         <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column' }}>
           {SPORTS_LIST.map((sport) => {
             const isSelected = selectedSport === sport.name;
+            const liveCount = matches.filter(m => m.sport.toLowerCase() === sport.name.toLowerCase() && m.status === 'live').length;
             return (
               <li key={sport.name}>
                 <button
@@ -134,7 +135,7 @@ export default function Sidebar({ selectedSport, setSelectedSport }) {
                     <span style={{ fontSize: '1.15rem' }}>{sport.icon}</span>
                     <span>{sport.name}</span>
                   </div>
-                  {sport.liveCount > 0 && (
+                  {liveCount > 0 && (
                     <span style={{
                       backgroundColor: 'rgba(0, 255, 133, 0.12)',
                       color: 'var(--live-green)',
@@ -144,7 +145,7 @@ export default function Sidebar({ selectedSport, setSelectedSport }) {
                       borderRadius: '10px',
                       border: '1px solid rgba(0, 255, 133, 0.2)'
                     }}>
-                      {sport.liveCount} LIVE
+                      {liveCount} LIVE
                     </span>
                   )}
                 </button>

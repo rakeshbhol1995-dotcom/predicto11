@@ -74,10 +74,36 @@ function MainAppContent() {
             let oddsAway = 1.90;
             let oddsDraw = null;
 
-            if (market?.outcomes) {
-              const homeOutcome = market.outcomes.find(o => o.name === event.home_team);
-              const awayOutcome = market.outcomes.find(o => o.name === event.away_team);
-              const drawOutcome = market.outcomes.find(o => o.name === "Draw" || o.name === "Tie");
+            if (market?.outcomes && market.outcomes.length >= 2) {
+              const o1 = market.outcomes[0];
+              const o2 = market.outcomes[1];
+              const o3 = market.outcomes[2];
+
+              // Fuzzy match helper
+              const isMatch = (name, team) => {
+                if (!name || !team) return false;
+                const n = name.toLowerCase().trim();
+                const t = team.toLowerCase().trim();
+                return n === t || n.includes(t) || t.includes(n);
+              };
+
+              // Identify outcomes by fuzzy name check
+              let homeOutcome = market.outcomes.find(o => isMatch(o.name, event.home_team));
+              let awayOutcome = market.outcomes.find(o => isMatch(o.name, event.away_team));
+              let drawOutcome = market.outcomes.find(o => o.name.toLowerCase() === "draw" || o.name.toLowerCase() === "tie");
+
+              // Fallback to indices if names are inconclusive or abbreviated
+              if (!homeOutcome && !awayOutcome) {
+                homeOutcome = o1;
+                awayOutcome = o2;
+                if (market.outcomes.length === 3) {
+                  drawOutcome = o3;
+                }
+              } else if (!homeOutcome) {
+                homeOutcome = o1 === awayOutcome ? o2 : o1;
+              } else if (!awayOutcome) {
+                awayOutcome = o1 === homeOutcome ? o2 : o1;
+              }
 
               if (homeOutcome) oddsHome = homeOutcome.price;
               if (awayOutcome) oddsAway = awayOutcome.price;
@@ -142,8 +168,14 @@ function MainAppContent() {
             };
           });
 
-          setMatches(mapped);
-          setSelectedMatch(mapped[0]);
+          // Merge API matches with INITIAL_MATCHES to prevent empty sections
+          const merged = [
+            ...mapped,
+            ...INITIAL_MATCHES.filter(im => !mapped.some(m => m.homeTeam.toLowerCase() === im.homeTeam.toLowerCase() || m.awayTeam.toLowerCase() === im.awayTeam.toLowerCase()))
+          ];
+
+          setMatches(merged);
+          setSelectedMatch(merged[0]);
           setIsLiveApi(true);
           setApiStatus('Live Active');
         } else {
@@ -332,7 +364,7 @@ function MainAppContent() {
       <div className="main-layout">
         {/* Left: Sidebar (only visible on dashboard or details, and not in casino) */}
         {currentView !== 'admin' && activeTab !== 'Casino' && (
-          <Sidebar selectedSport={selectedSport} setSelectedSport={setSelectedSport} />
+          <Sidebar selectedSport={selectedSport} setSelectedSport={setSelectedSport} matches={matches} />
         )}
 
         {/* Center: Main View Controller */}
