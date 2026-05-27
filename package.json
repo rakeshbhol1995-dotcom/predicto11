@@ -1,21 +1,20 @@
 {
-  "name": "bet365-clone",
-  "private": true,
+  "name": "predicto11",
   "version": "1.0.0",
   "type": "module",
+  "main": "server.js",
   "scripts": {
-    "dev": "vite",
+    "start": "node server.js",
     "build": "vite build",
-    "preview": "vite preview",
-    "start": "node server.js"
+    "dev": "vite"
   },
   "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "lucide-react": "^0.395.0",
     "express": "^4.19.2"
   },
   "devDependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "lucide-react": "^0.395.0",
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.1",

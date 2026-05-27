@@ -12,7 +12,7 @@ node_modules/
 jspm_packages/
 
 # Build outputs
-dist/
+# dist/ is tracked for Hostinger Node.js serving
 dist-ssr/
 *.local
 
