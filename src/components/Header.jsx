@@ -2,6 +2,14 @@ import React, { useState } from 'react';
 import { useBet } from '../context/BetContext';
 import { Search, User, Wallet, Plus, Bell, Shield, LogOut } from 'lucide-react';
 
+const BrandLogo = () => (
+  <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ filter: 'drop-shadow(0 0 8px rgba(5, 196, 139, 0.5))' }}>
+    <polygon points="16,2 30,9 30,23 16,30 2,23 2,9" stroke="var(--brand-emerald)" strokeWidth="2.5" fill="rgba(5, 196, 139, 0.1)"/>
+    <path d="M11 9H16C18.5 9 20 10.5 20 12.5C20 14.5 18.5 16 16 16H11V23" stroke="var(--brand-yellow)" strokeWidth="2.5" strokeLinecap="round"/>
+    <line x1="21" y1="9" x2="21" y2="23" stroke="var(--brand-emerald)" strokeWidth="2.5" strokeLinecap="round"/>
+  </svg>
+);
+
 export default function Header({ activeTab, setActiveTab, onOpenDeposit, onOpenAuth, currentView, setCurrentView }) {
   const { user, logoutUser, balance, selectedFiat, setSelectedFiat, fiatSymbol, cryptoBalances } = useBet();
   const [showDropdown, setShowDropdown] = useState(false);
@@ -33,23 +41,26 @@ export default function Header({ activeTab, setActiveTab, onOpenDeposit, onOpenA
             color: 'var(--brand-yellow)', 
             fontFamily: 'var(--font-display)', 
             fontWeight: 800, 
-            fontSize: '1.4rem', 
+            fontSize: '1.3rem', 
             letterSpacing: '-0.5px',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            gap: '4px'
+            gap: '8px'
           }}
         >
-          PREDICTO<span style={{ color: 'var(--brand-emerald)' }}>11</span>
+          <BrandLogo />
+          <span>
+            PREDICTO<span style={{ color: 'var(--brand-emerald)' }}>11</span>
+          </span>
           <span style={{ 
-            fontSize: '0.6rem', 
+            fontSize: '0.55rem', 
             color: '#080a0f', 
             background: 'var(--brand-yellow)',
             padding: '2px 4px',
             borderRadius: '3px',
             fontWeight: 'bold',
-            marginLeft: '6px',
+            marginLeft: '2px',
             letterSpacing: 'normal'
           }}>CRYPTO</span>
         </div>

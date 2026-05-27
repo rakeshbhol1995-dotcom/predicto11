@@ -1,5 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, X, Send } from 'lucide-react';
+import { X, Send } from 'lucide-react';
+
+const LiveChatCustomLogo = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <circle cx="8" cy="10" r="1.5" fill="currentColor"/>
+    <circle cx="12" cy="10" r="1.5" fill="currentColor"/>
+    <circle cx="16" cy="10" r="1.5" fill="currentColor"/>
+  </svg>
+);
 
 export default function LiveChat() {
   const [isOpen, setIsOpen] = useState(false);
@@ -116,7 +125,7 @@ export default function LiveChat() {
         </div>
       ) : (
         <div className="chat-bubble" onClick={() => setIsOpen(true)}>
-          <MessageSquare size={24} />
+          <LiveChatCustomLogo />
         </div>
       )}
     </div>

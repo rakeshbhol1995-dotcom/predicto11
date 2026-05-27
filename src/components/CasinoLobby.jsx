@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useBet } from '../context/BetContext';
-import { Sparkles, Trophy, HelpCircle, AlertTriangle, Disc, RefreshCw } from 'lucide-react';
+import { Trophy, HelpCircle, AlertTriangle, Disc, RefreshCw } from 'lucide-react';
+
+const CasinoCustomLogo = () => (
+  <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ filter: 'drop-shadow(0 0 8px rgba(156, 39, 176, 0.6))' }}>
+    <circle cx="16" cy="16" r="14" stroke="var(--brand-purple)" strokeWidth="2" strokeDasharray="4 2"/>
+    <path d="M7 22L10 11L16 17L22 11L25 22H7Z" fill="var(--brand-gold)" stroke="var(--brand-gold)" strokeWidth="1.5" strokeLinejoin="round"/>
+    <circle cx="16" cy="11" r="1.5" fill="var(--brand-gold)"/>
+    <circle cx="7" cy="20" r="1.5" fill="var(--brand-gold)"/>
+    <circle cx="25" cy="20" r="1.5" fill="var(--brand-gold)"/>
+  </svg>
+);
 
 export default function CasinoLobby() {
   const { user, balance, fiatSymbol, convertFiatToUsdt, convertUsdtToFiat, adjustCryptoBalance } = useBet();
@@ -116,7 +126,7 @@ export default function CasinoLobby() {
     setRouletteResult(null);
 
     const stakeVal = parseFloat(rouletteStake);
-    if (isNaN(stakeVal) || stakeVal <= 0) {
+    if (isNaN(zoom => rouletteStake)) {
       setErrorMessage("Please enter a valid stake amount.");
       return;
     }
@@ -195,7 +205,7 @@ export default function CasinoLobby() {
         <div style={{ position: 'absolute', top: '-30px', right: '-30px', width: '120px', height: '120px', background: 'var(--brand-purple)', filter: 'blur(50px)', opacity: 0.4 }} />
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <Sparkles size={28} style={{ color: 'var(--brand-purple)' }} />
+          <CasinoCustomLogo />
           <div>
             <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#ffffff' }}>Predicto11 Live Casino</h2>
             <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Spin classic video reels or test your strategy in live European roulette wheel tables.</p>

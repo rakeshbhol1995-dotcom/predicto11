@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
 import { useBet } from '../context/BetContext';
-import { Settings, ShieldAlert, Award, FileText, Users, Play, PenTool } from 'lucide-react';
+import { Settings, Award, FileText, Users, Play, PenTool } from 'lucide-react';
+
+const AdminCustomLogo = () => (
+  <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ filter: 'drop-shadow(0 0 8px rgba(171, 71, 188, 0.5))' }}>
+    <rect x="6" y="12" width="20" height="14" rx="3" stroke="#ab47bc" strokeWidth="2.5" fill="rgba(171, 71, 188, 0.1)"/>
+    <path d="M11 12V8C11 5.2 13.2 3 16 3C18.8 3 21 5.2 21 8V12" stroke="#ab47bc" strokeWidth="2.5" strokeLinecap="round"/>
+    <circle cx="16" cy="19" r="2.5" fill="var(--brand-yellow)"/>
+  </svg>
+);
 
 export default function AdminPanel({ matches, onUpdateMatches }) {
   const { usersList, placedBets, fiatSymbol, convertUsdtToFiat } = useBet();
@@ -64,7 +72,7 @@ export default function AdminPanel({ matches, onUpdateMatches }) {
         boxShadow: '0 8px 32px rgba(171, 71, 188, 0.15)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <ShieldAlert size={28} style={{ color: '#ab47bc' }} />
+          <AdminCustomLogo />
           <div>
             <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#ffffff' }}>Predicto11 Backoffice</h2>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Admin dashboard to override live match events, monitor balances and view placed bets.</p>
