@@ -40,13 +40,20 @@ html {
   max-width: 100%;
 }
 
+html, body {
+  height: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+
 body {
   background-color: var(--bg-dark);
   color: var(--text-main);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
   width: 100%;
   max-width: 100vw;
   /* Premium Dark Mesh Gradient Background */
@@ -124,11 +131,12 @@ h1, h2, h3, h4, h5 {
 .app-container {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100%;
+  height: 100dvh;
   position: relative;
   width: 100%;
   max-width: 100vw;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 .main-layout {
@@ -136,7 +144,7 @@ h1, h2, h3, h4, h5 {
   grid-template-columns: 260px 1fr 350px;
   flex-grow: 1;
   overflow: hidden;
-  height: calc(100vh - 56px); /* Header height offset */
+  height: calc(100% - 56px); /* Header height offset */
   width: 100%;
   max-width: 100%;
 }
@@ -321,7 +329,7 @@ h1, h2, h3, h4, h5 {
 @media (max-width: 768px) {
   .main-layout {
     grid-template-columns: 1fr;
-    height: calc(100vh - 112px);
+    height: calc(100% - 112px);
   }
   .left-sidebar {
     display: none !important;
@@ -329,6 +337,13 @@ h1, h2, h3, h4, h5 {
   .dashboard-main {
     padding: 10px;
     gap: 10px;
+    padding-bottom: 140px !important; /* Prevent bottom nav and chat widget overlap */
+  }
+  .match-detail-container {
+    padding-bottom: 140px !important;
+  }
+  .casino-lobby-container {
+    padding-bottom: 140px !important;
   }
   .promos-grid {
     grid-template-columns: 1fr;
@@ -591,7 +606,7 @@ h1, h2, h3, h4, h5 {
 
 @media (max-width: 768px) {
   .chat-widget-container {
-    bottom: 72px;
+    bottom: 80px;
     right: 16px;
   }
 }
@@ -700,7 +715,7 @@ h1, h2, h3, h4, h5 {
     display: flex;
   }
   .main-layout {
-    height: calc(100vh - 112px); /* Header + Bottom Nav offset */
+    height: calc(100% - 112px); /* Header + Bottom Nav offset */
   }
 }
 

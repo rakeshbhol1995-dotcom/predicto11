@@ -50,7 +50,7 @@ export default function MatchDetailView({ match, onBack, oddsFlash }) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '16px', height: '100%', overflowY: 'auto' }}>
+    <div className="match-detail-container" style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '16px', height: '100%', overflowY: 'auto' }}>
       {/* Breadcrumbs / Back Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <button 

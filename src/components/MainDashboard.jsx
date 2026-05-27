@@ -87,12 +87,12 @@ export default function MainDashboard({ matches, selectedSport, setSelectedSport
       className="match-card"
       style={{
         background: selectedMatch?.id === match.id
-          ? 'rgba(5, 196, 139, 0.05)'
-          : 'rgba(16, 21, 30, 0.6)',
+          ? 'rgba(5, 196, 139, 0.04)'
+          : 'rgba(18, 26, 38, 0.65)',
         border: selectedMatch?.id === match.id
-          ? '1px solid rgba(5, 196, 139, 0.3)'
-          : '1px solid rgba(255,255,255,0.06)',
-        borderRadius: '10px',
+          ? '1px solid rgba(5, 196, 139, 0.35)'
+          : '1px solid rgba(255, 255, 255, 0.06)',
+        borderRadius: '8px',
         marginBottom: '8px',
         overflow: 'hidden',
         cursor: 'pointer',
@@ -105,13 +105,13 @@ export default function MainDashboard({ matches, selectedSport, setSelectedSport
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '8px 12px',
+        padding: '7px 12px',
         borderBottom: '1px solid rgba(255,255,255,0.05)',
         background: 'rgba(0,0,0,0.2)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ fontSize: '0.85rem' }}>{sportIcon(match.sport)}</span>
-          <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+          <span style={{ fontSize: '0.8rem' }}>{sportIcon(match.sport)}</span>
+          <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
             {match.league}
           </span>
         </div>
@@ -123,7 +123,7 @@ export default function MainDashboard({ matches, selectedSport, setSelectedSport
               border: '1px solid rgba(0, 255, 133, 0.25)',
               borderRadius: '4px',
               padding: '2px 7px',
-              fontSize: '0.6rem', fontWeight: 800, color: 'var(--live-green)',
+              fontSize: '0.58rem', fontWeight: 800, color: 'var(--live-green)',
               textTransform: 'uppercase', letterSpacing: '0.5px'
             }}>
               <span style={{
@@ -140,76 +140,82 @@ export default function MainDashboard({ matches, selectedSport, setSelectedSport
               background: 'rgba(255,255,255,0.07)',
               borderRadius: '4px',
               padding: '2px 7px',
-              fontSize: '0.6rem', fontWeight: 600, color: 'var(--text-muted)'
+              fontSize: '0.58rem', fontWeight: 600, color: 'var(--text-muted)'
             }}>
               {match.time}
             </span>
           )}
-          <ChevronRight size={12} style={{ color: 'var(--text-muted)' }} />
+          <ChevronRight size={11} style={{ color: 'var(--text-muted)' }} />
         </div>
       </div>
 
-      {/* Teams + Scores */}
-      <div style={{ padding: '10px 12px 6px 12px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '6px' }}>
+      {/* Card Content Row */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px' }}>
+        {/* Left Side: Teams & Scores */}
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '6px', paddingRight: '12px' }}>
+          {/* Home Team */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontWeight: 700, fontSize: '0.88rem', color: '#fff' }}>{match.homeTeam}</span>
+            <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{match.homeTeam}</span>
             {match.status === 'live' && (
-              <span style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--brand-yellow)', fontFamily: 'var(--font-display)' }}>
+              <span style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--brand-yellow)', fontFamily: 'var(--font-display)', marginLeft: '8px' }}>
                 {match.homeScore}
               </span>
             )}
           </div>
+          {/* Away Team */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontWeight: 700, fontSize: '0.88rem', color: 'rgba(255,255,255,0.75)' }}>{match.awayTeam}</span>
+            <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'rgba(255,255,255,0.75)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{match.awayTeam}</span>
             {match.status === 'live' && (
-              <span style={{ fontWeight: 800, fontSize: '0.95rem', color: 'rgba(198,255,0,0.75)', fontFamily: 'var(--font-display)' }}>
+              <span style={{ fontWeight: 800, fontSize: '0.9rem', color: 'rgba(198,255,0,0.75)', fontFamily: 'var(--font-display)', marginLeft: '8px' }}>
                 {match.awayScore}
               </span>
             )}
           </div>
+          {/* Live Action Ticker / Upcoming status */}
+          {match.status === 'live' && match.eventStatus ? (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '4px',
+              fontSize: '0.62rem', color: 'var(--text-muted)', marginTop: '2px',
+            }}>
+              <PlayCircle size={8} style={{ color: 'var(--live-green)', flexShrink: 0 }} />
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {match.eventStatus}
+              </span>
+            </div>
+          ) : null}
         </div>
 
-        {match.status === 'live' && match.eventStatus && (
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '4px',
-            fontSize: '0.68rem', color: 'var(--text-muted)', marginBottom: '8px',
-          }}>
-            <PlayCircle size={9} style={{ color: 'var(--live-green)', flexShrink: 0 }} />
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {match.eventStatus}
-            </span>
-          </div>
-        )}
-
-        {/* Odds Buttons */}
-        <div className="match-odds-row" onClick={(e) => e.stopPropagation()}>
+        {/* Right Side: Odds Columns */}
+        <div className="match-odds-row" style={{ display: 'flex', gap: '4px', width: '150px', flexShrink: 0, marginTop: 0, paddingBottom: 0 }} onClick={(e) => e.stopPropagation()}>
           <button
             className={`odds-btn ${isSelected(match.id, 'Home') ? 'odds-btn-selected' : ''} ${getFlashClass(match.id, 'home')}`}
             onClick={() => handleOddsClick(match, 'Home', match.odds.home)}
+            style={{ height: '38px', borderRadius: '4px' }}
           >
-            <span className="odds-label">1</span>
-            <span className="odds-value">{match.odds.home ? match.odds.home.toFixed(2) : '-'}</span>
+            <span className="odds-label" style={{ fontSize: '0.55rem' }}>1</span>
+            <span className="odds-value" style={{ fontSize: '0.8rem' }}>{match.odds.home ? match.odds.home.toFixed(2) : '-'}</span>
           </button>
 
           {match.odds.draw !== null ? (
             <button
               className={`odds-btn ${isSelected(match.id, 'Draw') ? 'odds-btn-selected' : ''} ${getFlashClass(match.id, 'draw')}`}
               onClick={() => handleOddsClick(match, 'Draw', match.odds.draw)}
+              style={{ height: '38px', borderRadius: '4px' }}
             >
-              <span className="odds-label">X</span>
-              <span className="odds-value">{match.odds.draw ? match.odds.draw.toFixed(2) : '-'}</span>
+              <span className="odds-label" style={{ fontSize: '0.55rem' }}>X</span>
+              <span className="odds-value" style={{ fontSize: '0.8rem' }}>{match.odds.draw ? match.odds.draw.toFixed(2) : '-'}</span>
             </button>
           ) : (
-            <div style={{ flex: 1 }} />
+            <div style={{ flex: 1, height: '38px', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.04)', borderRadius: '4px' }} />
           )}
 
           <button
             className={`odds-btn ${isSelected(match.id, 'Away') ? 'odds-btn-selected' : ''} ${getFlashClass(match.id, 'away')}`}
             onClick={() => handleOddsClick(match, 'Away', match.odds.away)}
+            style={{ height: '38px', borderRadius: '4px' }}
           >
-            <span className="odds-label">2</span>
-            <span className="odds-value">{match.odds.away ? match.odds.away.toFixed(2) : '-'}</span>
+            <span className="odds-label" style={{ fontSize: '0.55rem' }}>2</span>
+            <span className="odds-value" style={{ fontSize: '0.8rem' }}>{match.odds.away ? match.odds.away.toFixed(2) : '-'}</span>
           </button>
         </div>
       </div>

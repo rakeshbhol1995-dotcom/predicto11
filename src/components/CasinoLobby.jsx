@@ -258,7 +258,7 @@ export default function CasinoLobby() {
   };
 
   return (
-    <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px', overflowY: 'auto', height: '100%' }}>
+    <div className="casino-lobby-container" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px', overflowY: 'auto', height: '100%' }}>
       {/* Dynamic Header */}
       <div style={{
         background: 'linear-gradient(135deg, #1f0c2e 0%, #050308 100%)',
