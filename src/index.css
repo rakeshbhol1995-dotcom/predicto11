@@ -5,8 +5,10 @@
   --brand-emerald: #05c48b;
   --brand-yellow: #c6ff00;
   --brand-yellow-hover: #b2e600;
+  --brand-gold: #ffd700;
+  --brand-purple: #9c27b0;
   
-  --bg-dark: #080a0f;
+  --bg-dark: #05070a;
   --bg-panel: rgba(16, 21, 30, 0.75);
   --bg-card: rgba(28, 36, 48, 0.6);
   --bg-card-hover: rgba(38, 48, 64, 0.85);
@@ -39,7 +41,12 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
-  background-image: radial-gradient(circle at 50% 0%, #0d231d 0%, #080a0f 60%);
+  /* Premium Dark Mesh Gradient Background */
+  background: 
+    radial-gradient(at 0% 0%, rgba(13, 35, 29, 0.5) 0px, transparent 50%), 
+    radial-gradient(at 50% 0%, rgba(8, 12, 19, 0.8) 0px, transparent 50%), 
+    radial-gradient(at 100% 0%, rgba(26, 9, 36, 0.4) 0px, transparent 50%), 
+    #05070a;
 }
 
 /* Scrollbar styles */
@@ -117,7 +124,7 @@ h1, h2, h3, h4, h5 {
     grid-template-columns: 220px 1fr;
   }
   .right-sidebar {
-    display: none; /* Hide match tracker/slip on tablet/mobile sidebar */
+    display: none; /* Hide match tracker/slip on sidebar */
   }
 }
 
@@ -126,7 +133,7 @@ h1, h2, h3, h4, h5 {
     grid-template-columns: 1fr;
   }
   .left-sidebar {
-    display: none; /* Collapsed under toggle or menu */
+    display: none;
   }
 }
 
@@ -173,6 +180,12 @@ h1, h2, h3, h4, h5 {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-panel:hover {
+  border-color: rgba(5, 196, 139, 0.2);
+  box-shadow: 0 12px 40px 0 rgba(5, 196, 139, 0.08);
 }
 
 /* Odds cells */
@@ -448,4 +461,24 @@ h1, h2, h3, h4, h5 {
   .main-layout {
     height: calc(100vh - 112px); /* Header + Bottom Nav offset */
   }
+}
+
+/* Casino Specific Slots Reel Animations */
+@keyframes spinReel {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
+}
+
+.slots-reel-spinning {
+  animation: spinReel 0.1s linear infinite;
+}
+
+/* Casino Roulette Spinner indicator */
+@keyframes spinRoulette {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(1440deg); }
+}
+
+.roulette-spinning {
+  animation: spinRoulette 2.5s cubic-bezier(0.1, 0.8, 0.1, 1) 1;
 }

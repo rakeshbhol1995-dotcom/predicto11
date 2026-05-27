@@ -58,6 +58,29 @@ export const BetProvider = ({ children }) => {
     return parseFloat((fiatValue / EXCHANGE_RATES.USDT[selectedFiat]).toFixed(4));
   };
 
+  // Adjust USDT balance directly (for Casino games)
+  const adjustCryptoBalance = (usdtAmount, action = 'credit') => {
+    const amt = parseFloat(usdtAmount);
+    if (isNaN(amt) || amt <= 0) return false;
+
+    let success = false;
+    setCryptoBalances(prev => {
+      const currentUsdt = prev.usdt;
+      let newUsdt = currentUsdt;
+      if (action === 'credit') {
+        newUsdt = parseFloat((currentUsdt + amt).toFixed(4));
+        success = true;
+      } else if (action === 'deduct') {
+        if (currentUsdt >= amt) {
+          newUsdt = parseFloat((currentUsdt - amt).toFixed(4));
+          success = true;
+        }
+      }
+      return { ...prev, usdt: newUsdt };
+    });
+    return success;
+  };
+
   // User Actions: Auth
   const registerUser = (username, email, mobile, password) => {
     const exists = usersList.some(u => u.username.toLowerCase() === username.toLowerCase() || u.email.toLowerCase() === email.toLowerCase());
@@ -265,6 +288,7 @@ export const BetProvider = ({ children }) => {
         fiatSymbol: FIAT_SYMBOLS[selectedFiat],
         convertUsdtToFiat,
         convertFiatToUsdt,
+        adjustCryptoBalance,
         selections,
         placedBets,
         setPlacedBets,

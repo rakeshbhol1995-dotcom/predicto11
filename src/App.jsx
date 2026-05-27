@@ -9,6 +9,7 @@ import DepositModal from './components/DepositModal';
 import AuthModal from './components/AuthModal';
 import MatchDetailView from './components/MatchDetailView';
 import AdminPanel from './components/AdminPanel';
+import CasinoLobby from './components/CasinoLobby';
 import LiveChat from './components/LiveChat';
 import { INITIAL_MATCHES } from './data/mockData';
 import { Shield, Home, PlayCircle, ShoppingBag, User } from 'lucide-react';
@@ -16,7 +17,7 @@ import { Shield, Home, PlayCircle, ShoppingBag, User } from 'lucide-react';
 function MainAppContent() {
   const [matches, setMatches] = useState(INITIAL_MATCHES);
   const [selectedSport, setSelectedSport] = useState('All');
-  const [activeTab, setActiveTab] = useState('Sports'); // 'Sports' or 'In-Play'
+  const [activeTab, setActiveTab] = useState('Sports'); // 'Sports' or 'In-Play' or 'Casino'
   const [selectedMatch, setSelectedMatch] = useState(INITIAL_MATCHES[0]); // Default to first match
   const [oddsFlash, setOddsFlash] = useState({});
   const [isDepositOpen, setIsDepositOpen] = useState(false);
@@ -206,8 +207,8 @@ function MainAppContent() {
 
       {/* Main Grid Layout */}
       <div className="main-layout">
-        {/* Left: Sidebar (only visible on dashboard or details) */}
-        {currentView !== 'admin' && (
+        {/* Left: Sidebar (only visible on dashboard or details, and not in casino) */}
+        {currentView !== 'admin' && activeTab !== 'Casino' && (
           <Sidebar selectedSport={selectedSport} setSelectedSport={setSelectedSport} />
         )}
 
@@ -218,10 +219,12 @@ function MainAppContent() {
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          gridColumn: currentView === 'admin' ? '1 / span 3' : undefined
+          gridColumn: (currentView === 'admin' || activeTab === 'Casino') ? '1 / span 3' : undefined
         }}>
           {currentView === 'admin' ? (
             <AdminPanel matches={matches} onUpdateMatches={setMatches} />
+          ) : activeTab === 'Casino' ? (
+            <CasinoLobby />
           ) : currentView === 'match-detail' ? (
             <MatchDetailView 
               match={selectedMatch} 
@@ -244,8 +247,8 @@ function MainAppContent() {
           )}
         </main>
 
-        {/* Right Sidebar: Match Tracker and Bet Slip (hidden in admin) */}
-        {currentView !== 'admin' && (
+        {/* Right Sidebar: Match Tracker and Bet Slip (hidden in admin & casino) */}
+        {currentView !== 'admin' && activeTab !== 'Casino' && (
           <div className="right-sidebar" style={{
             display: 'flex',
             flexDirection: 'column',
