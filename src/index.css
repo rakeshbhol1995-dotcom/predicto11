@@ -531,18 +531,22 @@ h1, h2, h3, h4, h5 {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
+  z-index: 1000; /* Ensure it stays above everything */
+  overflow-y: auto; /* Enable scroll on small devices when keyboard is up */
+  padding: 16px;
   animation: fadeIn 0.25s ease;
 }
 
 .modal-content {
-  background: rgba(20, 27, 38, 0.95);
+  background: rgba(20, 27, 38, 0.98);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(5, 196, 139, 0.1);
   border-radius: 16px;
-  width: 90%;
+  width: 100%;
   max-width: 500px;
-  overflow: hidden;
+  margin: auto; /* Vertically and horizontally center during scrolling */
+  max-height: calc(100vh - 32px); /* Keep content within viewport bounds */
+  overflow-y: auto; /* Internal scrolling if content is taller than overlay */
   animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 

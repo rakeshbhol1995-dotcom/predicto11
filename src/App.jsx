@@ -11,6 +11,7 @@ import MatchDetailView from './components/MatchDetailView';
 import AdminPanel from './components/AdminPanel';
 import CasinoLobby from './components/CasinoLobby';
 import LiveChat from './components/LiveChat';
+import Preloader from './components/Preloader';
 import { INITIAL_MATCHES } from './data/mockData';
 import { Shield, Home, PlayCircle, ShoppingBag, User, Crown } from 'lucide-react';
 
@@ -348,6 +349,7 @@ function MainAppContent() {
 
   return (
     <div className="app-container">
+      <Preloader />
       {/* Header */}
       <Header 
         activeTab={activeTab} 
