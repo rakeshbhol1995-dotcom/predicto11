@@ -118,22 +118,106 @@ h1, h2, h3, h4, h5 {
   height: calc(100vh - 56px); /* Header height offset */
 }
 
+/* Base sidebars style without forcing layouts inline */
+.left-sidebar {
+  background-color: var(--bg-panel);
+  border-right: 1px solid var(--border-color);
+  padding: 12px 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.right-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  border-left: 1px solid var(--border-color);
+  background-color: var(--bg-panel);
+}
+
+/* Match schedule rows responsive styling */
+.promos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.match-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+  gap: 12px;
+}
+
+.match-info {
+  flex: 1;
+  min-width: 150px;
+}
+
+.match-odds-container {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+/* Roulette game panel responsive grid */
+.roulette-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 24px;
+}
+
 /* Responsive constraints */
 @media (max-width: 1280px) {
   .main-layout {
     grid-template-columns: 220px 1fr;
   }
   .right-sidebar {
-    display: none; /* Hide match tracker/slip on sidebar */
+    display: none !important; /* Hide match tracker/slip on sidebar */
   }
 }
 
 @media (max-width: 768px) {
   .main-layout {
     grid-template-columns: 1fr;
+    height: calc(100vh - 112px); /* Header + Bottom Nav offset */
   }
   .left-sidebar {
-    display: none;
+    display: none !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .roulette-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 580px) {
+  .match-row {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px;
+    gap: 10px;
+  }
+  .match-info {
+    min-width: unset;
+  }
+  .match-odds-container {
+    justify-content: space-between;
+    width: 100%;
+  }
+  .match-odds-container button {
+    flex: 1;
   }
 }
 
@@ -355,6 +439,13 @@ h1, h2, h3, h4, h5 {
   align-items: flex-end;
 }
 
+@media (max-width: 768px) {
+  .chat-widget-container {
+    bottom: 72px;
+    right: 16px;
+  }
+}
+
 .chat-bubble {
   width: 56px;
   height: 56px;
@@ -481,4 +572,58 @@ h1, h2, h3, h4, h5 {
 
 .roulette-spinning {
   animation: spinRoulette 2.5s cubic-bezier(0.1, 0.8, 0.1, 1) 1;
+}
+
+/* Header Responsiveness Utility Classes */
+.header-nav {
+  display: flex;
+  gap: 4px;
+  height: 56px;
+}
+
+.header-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.currency-label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.wallet-title {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.wallet-sub-balance {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  margin-top: -1px;
+}
+
+@media (max-width: 900px) {
+  .header-search {
+    display: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-nav {
+    display: none !important;
+  }
+}
+
+@media (max-width: 580px) {
+  .currency-label {
+    display: none !important;
+  }
+  .wallet-title {
+    display: none !important;
+  }
+  .wallet-sub-balance {
+    display: none !important;
+  }
 }

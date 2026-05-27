@@ -305,7 +305,7 @@ export default function CasinoLobby() {
 
       {/* 1. LOBBY VIEW */}
       {activeGame === 'lobby' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
           {/* Game 1 card */}
           <div className="card-panel" style={{
             position: 'relative',
@@ -439,11 +439,8 @@ export default function CasinoLobby() {
 
       {/* 3. LIVE ROULETTE GAME PANEL */}
       {activeGame === 'roulette' && (
-        <div className="card-panel" style={{
+        <div className="card-panel roulette-grid" style={{
           padding: '24px',
-          display: 'grid',
-          gridTemplateColumns: '1.2fr 1fr',
-          gap: '24px',
           background: 'linear-gradient(135deg, rgba(16, 21, 30, 0.9) 0%, rgba(5, 7, 10, 0.95) 100%)'
         }}>
           {/* Left: Roulette Wheel board representation */}

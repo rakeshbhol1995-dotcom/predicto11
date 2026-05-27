@@ -12,7 +12,7 @@ import AdminPanel from './components/AdminPanel';
 import CasinoLobby from './components/CasinoLobby';
 import LiveChat from './components/LiveChat';
 import { INITIAL_MATCHES } from './data/mockData';
-import { Shield, Home, PlayCircle, ShoppingBag, User } from 'lucide-react';
+import { Shield, Home, PlayCircle, ShoppingBag, User, Crown } from 'lucide-react';
 
 function MainAppContent() {
   const [matches, setMatches] = useState(INITIAL_MATCHES);
@@ -249,12 +249,7 @@ function MainAppContent() {
 
         {/* Right Sidebar: Match Tracker and Bet Slip (hidden in admin & casino) */}
         {currentView !== 'admin' && activeTab !== 'Casino' && (
-          <div className="right-sidebar" style={{
-            display: 'flex',
-            flexDirection: 'column',
-            height: '100%',
-            overflow: 'hidden'
-          }}>
+          <div className="right-sidebar">
             {/* Top: Match Tracker (only if not viewing mobile drawers) */}
             {currentView !== 'mobile-slip' && currentView !== 'mobile-mybets' && (
               <div style={{ flex: '0 0 auto', padding: '12px 12px 6px 12px', borderBottom: '1.5px solid var(--border-color)' }}>
@@ -276,7 +271,7 @@ function MainAppContent() {
           onClick={() => { setCurrentView('dashboard'); setActiveTab('Sports'); }} 
           style={{ background: 'none', border: 'none', color: currentView === 'dashboard' && activeTab === 'Sports' ? 'var(--brand-yellow)' : 'var(--text-muted)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', fontSize: '0.65rem' }}
         >
-          <Home size={18} /> Home
+          <Home size={18} /> Sports
         </button>
         <button 
           onClick={() => { setCurrentView('dashboard'); setActiveTab('In-Play'); }} 
@@ -285,34 +280,30 @@ function MainAppContent() {
           <PlayCircle size={18} /> In-Play
         </button>
         <button 
-          onClick={() => { if (!user) setIsAuthOpen(true); else setCurrentView('mobile-slip'); }} 
+          onClick={() => { setCurrentView('dashboard'); setActiveTab('Casino'); }} 
+          style={{ background: 'none', border: 'none', color: currentView === 'dashboard' && activeTab === 'Casino' ? 'var(--brand-purple)' : 'var(--text-muted)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', fontSize: '0.65rem' }}
+        >
+          <Crown size={18} /> Casino
+        </button>
+        <button 
+          onClick={() => setCurrentView('mobile-slip')} 
           style={{ background: 'none', border: 'none', color: currentView === 'mobile-slip' ? 'var(--brand-yellow)' : 'var(--text-muted)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', fontSize: '0.65rem' }}
         >
           <ShoppingBag size={18} /> Bet Slip
         </button>
         {user ? (
-          <>
-            <button 
-              onClick={() => setCurrentView('mobile-mybets')} 
-              style={{ background: 'none', border: 'none', color: currentView === 'mobile-mybets' ? 'var(--brand-yellow)' : 'var(--text-muted)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', fontSize: '0.65rem' }}
-            >
-              <User size={18} /> My Bets
-            </button>
-            {user.isAdmin && (
-              <button 
-                onClick={() => setCurrentView(currentView === 'admin' ? 'dashboard' : 'admin')} 
-                style={{ background: 'none', border: 'none', color: currentView === 'admin' ? 'var(--brand-yellow)' : 'var(--text-muted)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', fontSize: '0.65rem' }}
-              >
-                <Shield size={18} /> Admin
-              </button>
-            )}
-          </>
+          <button 
+            onClick={() => setCurrentView('mobile-mybets')} 
+            style={{ background: 'none', border: 'none', color: currentView === 'mobile-mybets' ? 'var(--brand-yellow)' : 'var(--text-muted)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', fontSize: '0.65rem' }}
+          >
+            <User size={18} /> My Bets
+          </button>
         ) : (
           <button 
             onClick={() => setIsAuthOpen(true)} 
             style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', fontSize: '0.65rem' }}
           >
-            <User size={18} /> Join/Login
+            <User size={18} /> Login
           </button>
         )}
       </div>

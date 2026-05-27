@@ -38,7 +38,7 @@ export default function MainDashboard({ matches, selectedSport, activeTab, oddsF
       gap: '20px'
     }}>
       {/* Promos */}
-      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+      <section className="promos-grid">
         {PROMOTIONS.map((promo) => (
           <div
             key={promo.id}
@@ -120,19 +120,14 @@ export default function MainDashboard({ matches, selectedSport, activeTab, oddsF
             filteredMatches.map((match) => (
               <div
                 key={match.id}
+                className="match-row"
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '14px 16px',
-                  borderBottom: '1px solid var(--border-color)',
                   backgroundColor: selectedMatch?.id === match.id ? 'rgba(255,255,255,0.02)' : 'transparent',
-                  transition: 'background-color 0.2s ease',
-                  cursor: 'pointer'
                 }}
                 onClick={() => onSelectMatch(match)}
               >
                 {/* Team Info / Live indicator */}
-                <div style={{ flex: '1', minWidth: '150px' }}>
+                <div className="match-info">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
                     <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>{match.league}</span>
                     {match.status === 'live' ? (
@@ -187,7 +182,7 @@ export default function MainDashboard({ matches, selectedSport, activeTab, oddsF
                 </div>
 
                 {/* Odds Buttons Columns */}
-                <div style={{ display: 'flex', gap: '8px', minWidth: '220px', justifyContent: 'flex-end' }} onClick={(e) => e.stopPropagation()}>
+                <div className="match-odds-container" onClick={(e) => e.stopPropagation()}>
                   {/* Home Win */}
                   <button
                     className={`odds-cell ${isSelected(match.id, 'Home') ? 'selected' : ''} ${getFlashClass(match.id, 'home')}`}

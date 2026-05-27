@@ -67,9 +67,8 @@ export default function BetSlip() {
   };
 
   return (
-    <aside className="right-sidebar" style={{
+    <div style={{
       backgroundColor: 'var(--bg-panel)',
-      borderLeft: '1px solid var(--border-color)',
       display: 'flex',
       flexDirection: 'column',
       height: '100%'
@@ -452,6 +451,6 @@ export default function BetSlip() {
           </div>
         )}
       </div>
-    </aside>
+    </div>
   );
 }

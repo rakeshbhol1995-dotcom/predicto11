@@ -4,15 +4,7 @@ import { Flame, Award, TrendingUp, Trophy } from 'lucide-react';
 
 export default function Sidebar({ selectedSport, setSelectedSport }) {
   return (
-    <aside className="left-sidebar" style={{
-      backgroundColor: 'var(--bg-panel)',
-      borderRight: '1px solid var(--border-color)',
-      padding: '12px 0',
-      overflowY: 'auto',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '20px'
-    }}>
+    <aside className="left-sidebar">
       {/* Popular Events Section */}
       <div>
         <h4 style={{

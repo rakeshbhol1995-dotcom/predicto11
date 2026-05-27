@@ -123,7 +123,6 @@ export const BetProvider = ({ children }) => {
   // Add or Toggle a selection in the betslip
   const toggleSelection = (match, outcomeName, oddValue, marketName = "Match Winner") => {
     if (oddValue === null) return;
-    if (!user) return; // Block odds selection if logged out
 
     const existingIndex = selections.findIndex(
       (sel) => sel.matchId === match.id && sel.outcomeName === outcomeName

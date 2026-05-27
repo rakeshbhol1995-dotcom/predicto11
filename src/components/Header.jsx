@@ -66,7 +66,7 @@ export default function Header({ activeTab, setActiveTab, onOpenDeposit, onOpenA
         </div>
 
         {currentView !== 'admin' && (
-          <nav style={{ display: 'flex', gap: '4px', height: '56px' }}>
+          <nav className="header-nav">
             {['Sports', 'In-Play', 'Casino'].map((tab) => {
               const isActive = activeTab === tab;
               return (
@@ -98,7 +98,7 @@ export default function Header({ activeTab, setActiveTab, onOpenDeposit, onOpenA
       {/* Utilities & User Info */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
         {/* Search */}
-        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+        <div className="header-search">
           <Search size={16} style={{ color: 'rgba(255,255,255,0.4)', position: 'absolute', left: '10px' }} />
           <input
             type="text"
@@ -128,7 +128,7 @@ export default function Header({ activeTab, setActiveTab, onOpenDeposit, onOpenA
 
         {/* Currency Selector Dropdown */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>CURRENCY:</span>
+          <span className="currency-label">CURRENCY:</span>
           <select
             value={selectedFiat}
             onChange={(e) => setSelectedFiat(e.target.value)}
@@ -188,11 +188,11 @@ export default function Header({ activeTab, setActiveTab, onOpenDeposit, onOpenA
             }}>
               <Wallet size={16} style={{ color: 'var(--brand-emerald)' }} />
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: 600 }}>FIAT BALANCE</span>
+                <span className="wallet-title">FIAT BALANCE</span>
                 <span style={{ fontSize: '0.95rem', color: 'var(--brand-yellow)', fontWeight: 'bold', fontFamily: 'var(--font-display)' }}>
                   {fiatSymbol}{balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
-                <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: '-1px' }}>
+                <span className="wallet-sub-balance">
                   USDT: {cryptoBalances.usdt.toFixed(2)} | BTC: {cryptoBalances.btc.toFixed(4)}
                 </span>
               </div>
