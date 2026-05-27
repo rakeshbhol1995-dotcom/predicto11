@@ -1,6 +1,66 @@
 import React, { useState, useEffect } from 'react';
 import { useBet } from '../context/BetContext';
-import { Trophy, HelpCircle, AlertTriangle, Disc, RefreshCw } from 'lucide-react';
+import { Trophy, HelpCircle, AlertTriangle, Disc, RefreshCw, Volume2, VolumeX } from 'lucide-react';
+
+const playCasinoSound = (type, soundEnabled = true) => {
+  if (!soundEnabled) return;
+  try {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (type === 'click') {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.08);
+    } else if (type === 'spin') {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+      osc.frequency.linearRampToValueAtTime(600, audioCtx.currentTime + 0.4);
+      gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.4);
+    } else if (type === 'win') {
+      const notes = [523.25, 659.25, 783.99, 1046.50];
+      notes.forEach((freq, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.08);
+        gain.gain.setValueAtTime(0.05, audioCtx.currentTime + idx * 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.002, audioCtx.currentTime + idx * 0.08 + 0.15);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(audioCtx.currentTime + idx * 0.08);
+        osc.stop(audioCtx.currentTime + idx * 0.08 + 0.15);
+      });
+    } else if (type === 'lose') {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+      osc.frequency.linearRampToValueAtTime(70, audioCtx.currentTime + 0.35);
+      gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.35);
+    }
+  } catch (e) {
+    console.warn(e);
+  }
+};
 
 const CasinoCustomLogo = () => (
   <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ filter: 'drop-shadow(0 0 8px rgba(156, 39, 176, 0.6))' }}>
@@ -18,6 +78,7 @@ export default function CasinoLobby() {
   const [activeGame, setActiveGame] = useState('lobby'); // 'lobby' | 'slots' | 'roulette'
   const [feedback, setFeedback] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [soundEnabled, setSoundEnabled] = useState(true);
 
   // 1. Slots States
   const slotItems = ["🍒", "🍋", "🍊", "💎", "⭐", "🔔"];
@@ -38,6 +99,7 @@ export default function CasinoLobby() {
   const triggerSlotsSpin = () => {
     if (!user) {
       setErrorMessage("Please login or join now to play with your crypto wallet!");
+
       return;
     }
     setErrorMessage('');
@@ -59,6 +121,7 @@ export default function CasinoLobby() {
     }
 
     setSlotsSpinning(true);
+    playCasinoSound('spin', soundEnabled);
     let counter = 0;
     
     const spinInterval = setInterval(() => {
@@ -111,8 +174,10 @@ export default function CasinoLobby() {
       adjustCryptoBalance(payoutUsdt, 'credit');
       const payoutFiat = convertUsdtToFiat(payoutUsdt);
       setFeedback(`🎉 ${winMsg} Won ${fiatSymbol}${payoutFiat.toLocaleString()}`);
+      playCasinoSound('win', soundEnabled);
     } else {
       setFeedback("Better luck next spin!");
+      playCasinoSound('lose', soundEnabled);
     }
   };
 
@@ -147,6 +212,7 @@ export default function CasinoLobby() {
     }
 
     setRouletteSpinning(true);
+    playCasinoSound('spin', soundEnabled);
 
     setTimeout(() => {
       const winningNumber = Math.floor(Math.random() * 37);
@@ -184,8 +250,10 @@ export default function CasinoLobby() {
       adjustCryptoBalance(payoutUsdt, 'credit');
       const payoutFiat = convertUsdtToFiat(payoutUsdt);
       setFeedback(`🎉 Winning Slot: ${result.number} ${result.color.toUpperCase()}! Won ${fiatSymbol}${payoutFiat.toLocaleString()}`);
+      playCasinoSound('win', soundEnabled);
     } else {
       setFeedback(`Winning Slot: ${result.number} ${result.color.toUpperCase()}. Better luck next round!`);
+      playCasinoSound('lose', soundEnabled);
     }
   };
 
@@ -214,57 +282,85 @@ export default function CasinoLobby() {
       </div>
 
       {/* Navigation sub-bar */}
-      <div style={{ display: 'flex', gap: '10px', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            onClick={() => { setActiveGame('lobby'); setErrorMessage(''); setFeedback(''); }}
+            style={{
+              backgroundColor: activeGame === 'lobby' ? 'var(--brand-purple)' : 'rgba(255,255,255,0.03)',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '8px 16px',
+              fontSize: '0.8rem',
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
+          >
+            Lobby Grid
+          </button>
+          <button
+            onClick={() => { setActiveGame('slots'); setErrorMessage(''); setFeedback(''); }}
+            style={{
+              backgroundColor: activeGame === 'slots' ? 'var(--brand-purple)' : 'rgba(255,255,255,0.03)',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '8px 16px',
+              fontSize: '0.8rem',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            🎰 Jackpot Slots
+          </button>
+          <button
+            onClick={() => { setActiveGame('roulette'); setErrorMessage(''); setFeedback(''); }}
+            style={{
+              backgroundColor: activeGame === 'roulette' ? 'var(--brand-purple)' : 'rgba(255,255,255,0.03)',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '8px 16px',
+              fontSize: '0.8rem',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <Disc size={14} /> Live Roulette
+          </button>
+        </div>
+
         <button
-          onClick={() => { setActiveGame('lobby'); setErrorMessage(''); setFeedback(''); }}
-          style={{
-            backgroundColor: activeGame === 'lobby' ? 'var(--brand-purple)' : 'rgba(255,255,255,0.03)',
-            color: '#ffffff',
-            border: 'none',
-            borderRadius: '6px',
-            padding: '8px 16px',
-            fontSize: '0.8rem',
-            fontWeight: 'bold',
-            cursor: 'pointer'
+          type="button"
+          onClick={() => {
+            const nextSound = !soundEnabled;
+            setSoundEnabled(nextSound);
+            playCasinoSound('click', nextSound);
           }}
-        >
-          Lobby Grid
-        </button>
-        <button
-          onClick={() => { setActiveGame('slots'); setErrorMessage(''); setFeedback(''); }}
           style={{
-            backgroundColor: activeGame === 'slots' ? 'var(--brand-purple)' : 'rgba(255,255,255,0.03)',
-            color: '#ffffff',
-            border: 'none',
-            borderRadius: '6px',
-            padding: '8px 16px',
-            fontSize: '0.8rem',
-            fontWeight: 'bold',
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '50%',
+            color: soundEnabled ? 'var(--brand-gold)' : 'var(--text-muted)',
+            width: '32px',
+            height: '32px',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            gap: '6px'
+            justifyContent: 'center',
+            transition: 'all 0.2s',
+            marginRight: '4px'
           }}
+          title={soundEnabled ? "Mute Sounds" : "Unmute Sounds"}
         >
-          🎰 Jackpot Slots
-        </button>
-        <button
-          onClick={() => { setActiveGame('roulette'); setErrorMessage(''); setFeedback(''); }}
-          style={{
-            backgroundColor: activeGame === 'roulette' ? 'var(--brand-purple)' : 'rgba(255,255,255,0.03)',
-            color: '#ffffff',
-            border: 'none',
-            borderRadius: '6px',
-            padding: '8px 16px',
-            fontSize: '0.8rem',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px'
-          }}
-        >
-          <Disc size={14} /> Live Roulette
+          {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
         </button>
       </div>
 
@@ -412,6 +508,44 @@ export default function CasinoLobby() {
               disabled={slotsSpinning}
               style={{ textAlign: 'center', fontWeight: 'bold' }}
             />
+          </div>
+
+          {/* Quick Chip Selection */}
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', margin: '5px 0' }}>
+            {[100, 500, 1000, 5000].map((val) => {
+              const isSelected = slotsStake === val.toString();
+              return (
+                <button
+                  key={val}
+                  type="button"
+                  disabled={slotsSpinning}
+                  onClick={() => {
+                    playCasinoSound('click', soundEnabled);
+                    setSlotsStake(val.toString());
+                  }}
+                  style={{
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '50%',
+                    backgroundColor: isSelected ? 'var(--brand-purple)' : 'rgba(255, 255, 255, 0.05)',
+                    border: isSelected ? '2px solid var(--brand-gold)' : '1px dashed rgba(255, 255, 255, 0.2)',
+                    color: isSelected ? '#ffffff' : 'var(--text-muted)',
+                    fontSize: '0.7rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: isSelected ? '0 0 10px rgba(156, 39, 176, 0.6)' : 'none',
+                    transition: 'all 0.15s'
+                  }}
+                >
+                  <span style={{ fontSize: '0.5rem', opacity: 0.7 }}>CHIP</span>
+                  <span>{fiatSymbol}{val >= 1000 ? `${val/1000}k` : val}</span>
+                </button>
+              );
+            })}
           </div>
 
           <button
@@ -593,6 +727,39 @@ export default function CasinoLobby() {
                 onChange={(e) => setRouletteStake(e.target.value)}
                 disabled={rouletteSpinning}
               />
+            </div>
+
+            {/* Quick Roulette Chip Selection */}
+            <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-start', margin: '4px 0' }}>
+              {[100, 500, 1000, 5000].map((val) => {
+                const isSelected = rouletteStake === val.toString();
+                return (
+                  <button
+                    key={val}
+                    type="button"
+                    disabled={rouletteSpinning}
+                    onClick={() => {
+                      playCasinoSound('click', soundEnabled);
+                      setRouletteStake(val.toString());
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: '6px 0',
+                      borderRadius: '4px',
+                      backgroundColor: isSelected ? 'var(--brand-purple)' : 'rgba(255, 255, 255, 0.05)',
+                      border: isSelected ? '1px solid var(--brand-gold)' : '1px solid rgba(255, 255, 255, 0.1)',
+                      color: isSelected ? '#ffffff' : 'var(--text-muted)',
+                      fontSize: '0.68rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      textAlign: 'center',
+                      transition: 'all 0.15s'
+                    }}
+                  >
+                    {fiatSymbol}{val >= 1000 ? `${val/1000}k` : val}
+                  </button>
+                );
+              })}
             </div>
 
             <button

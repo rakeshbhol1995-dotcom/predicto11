@@ -172,6 +172,18 @@ export const BetProvider = ({ children }) => {
     return true;
   };
 
+  // Deposit fiat (converted to USDT balance)
+  const depositFiat = (amount) => {
+    const amt = parseFloat(amount);
+    if (isNaN(amt) || amt <= 0) return false;
+    const usdtAmt = amt / EXCHANGE_RATES.USDT[selectedFiat];
+    setCryptoBalances(prev => ({
+      ...prev,
+      usdt: parseFloat((prev.usdt + usdtAmt).toFixed(6))
+    }));
+    return true;
+  };
+
   // Place bet
   const placeBet = (isAccumulator = false, accStake = "") => {
     if (!user) return { success: false, message: "Please log in to place bets." };
@@ -297,7 +309,8 @@ export const BetProvider = ({ children }) => {
         clearSlip,
         placeBet,
         cashOutBet,
-        depositCrypto
+        depositCrypto,
+        depositFiat
       }}
     >
       {children}

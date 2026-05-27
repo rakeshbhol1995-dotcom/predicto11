@@ -168,44 +168,222 @@ export default function MatchTracker({ match }) {
         </div>
       </div>
 
-      {/* Match Statistics */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '4px' }}>
-        {/* Possession */}
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '4px' }}>
-            <span>Possession</span>
-            <span>{homeStat}% vs {awayStat}%</span>
-          </div>
-          <div style={{ display: 'flex', height: '6px', borderRadius: '3px', overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0.1)' }}>
-            <div style={{ width: `${homeStat}%`, backgroundColor: 'var(--brand-yellow)', transition: 'width 0.5s ease' }} />
-            <div style={{ width: `${awayStat}%`, backgroundColor: '#e0e0e0', transition: 'width 0.5s ease' }} />
-          </div>
-        </div>
+      {/* Match Statistics & Sports Specific Scoreboard */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '4px' }}>
+        
+        {/* CASE 1: Cricket Scoreboard */}
+        {match.sport === 'Cricket' && (() => {
+          const awayParts = match.awayScore.split('/');
+          const cRuns = parseInt(awayParts[0]) || 0;
+          const cWickets = parseInt(awayParts[1]) || 0;
+          const cOvers = match.time || "0.0";
+          const ovSplit = cOvers.split(' ')[0].split('.');
+          const completedOvers = parseInt(ovSplit[0]) || 0;
+          const currentBalls = parseInt(ovSplit[1]) || 0;
+          const ballsBowled = (completedOvers * 6) + currentBalls;
+          const crr = ballsBowled > 0 ? ((cRuns / ballsBowled) * 6).toFixed(2) : "0.00";
+          
+          const target = 175;
+          const runsNeeded = target - cRuns;
+          const ballsRemaining = Math.max(0, 120 - ballsBowled);
+          const rrr = ballsRemaining > 0 ? ((runsNeeded / ballsRemaining) * 6).toFixed(2) : "0.00";
 
-        {/* Shots */}
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '4px' }}>
-            <span>{match.sport === 'Cricket' ? 'Runs / Overs' : match.sport === 'Tennis' ? 'Aces' : 'Dangerous Attacks'}</span>
-            <span>{homeShots} vs {awayShots}</span>
-          </div>
-          <div style={{ display: 'flex', height: '6px', borderRadius: '3px', overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0.1)' }}>
-            <div style={{ width: `${homeShotsPercent}%`, backgroundColor: 'var(--brand-teal-nav)', transition: 'width 0.5s ease' }} />
-            <div style={{ width: `${100 - homeShotsPercent}%`, backgroundColor: '#757575', transition: 'width 0.5s ease' }} />
-          </div>
-        </div>
+          // Generate simulated delivery sequence (last 6 balls)
+          const lastBalls = [1, 4, 'W', 0, 6, 1];
 
-        {/* Corners */}
-        {match.sport !== 'Tennis' && match.sport !== 'Cricket' && (
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '4px' }}>
-              <span>Corners</span>
-              <span>{homeCorners} vs {awayCorners}</span>
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {/* Detailed Live Board */}
+              <div style={{
+                backgroundColor: 'rgba(0,0,0,0.2)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '8px',
+                padding: '10px 14px',
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '8px'
+              }}>
+                <div style={{ borderRight: '1px solid var(--border-color)', paddingRight: '8px' }}>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>CURRENT RUN RATE</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--brand-yellow)' }}>{crr}</div>
+                </div>
+                <div style={{ paddingLeft: '8px' }}>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>REQUIRED RUN RATE</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--live-red)' }}>{rrr}</div>
+                </div>
+              </div>
+
+              {/* Batsmen / Bowler Board */}
+              <div style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '8px',
+                padding: '10px',
+                fontSize: '0.78rem'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '4px', fontWeight: 'bold', color: 'var(--text-muted)' }}>
+                  <span>Batsman</span>
+                  <span>R (B)</span>
+                  <span>4s / 6s</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px dashed rgba(255,255,255,0.05)' }}>
+                  <span style={{ color: 'var(--brand-yellow)' }}>R. Gaikwad *</span>
+                  <span>58 (42)</span>
+                  <span>4 / 2</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
+                  <span>S. Dube</span>
+                  <span>14 (9)</span>
+                  <span>1 / 1</span>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border-color)', borderBottom: '1px solid var(--border-color)', margin: '8px 0 4px 0', padding: '4px 0', fontWeight: 'bold', color: 'var(--text-muted)' }}>
+                  <span>Bowler</span>
+                  <span>O-M-R-W</span>
+                  <span>Econ</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
+                  <span>J. Bumrah</span>
+                  <span>3.2 - 0 - 24 - 2</span>
+                  <span>7.20</span>
+                </div>
+              </div>
+
+              {/* Delivery log */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>THIS OVER:</span>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  {lastBalls.map((b, idx) => (
+                    <span key={idx} style={{
+                      width: '20px',
+                      height: '20px',
+                      borderRadius: '50%',
+                      backgroundColor: b === 'W' ? 'var(--live-red)' : b === 4 || b === 6 ? 'var(--brand-emerald)' : 'rgba(255,255,255,0.1)',
+                      color: b === 'W' || b === 4 || b === 6 ? '#080a0f' : '#ffffff',
+                      fontSize: '0.65rem',
+                      fontWeight: 800,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      {b}
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
-            <div style={{ display: 'flex', height: '6px', borderRadius: '3px', overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0.1)' }}>
-              <div style={{ width: `${homeCornersPercent}%`, backgroundColor: 'var(--live-green)', transition: 'width 0.5s ease' }} />
-              <div style={{ width: `${100 - homeCornersPercent}%`, backgroundColor: '#9e9e9e', transition: 'width 0.5s ease' }} />
+          );
+        })()}
+
+        {/* CASE 2: Tennis Scoreboard */}
+        {match.sport === 'Tennis' && (() => {
+          const homeSplit = match.homeScore.split('|');
+          const p1Sets = homeSplit[0]?.trim() || "0";
+          const p1Points = homeSplit[1]?.trim() || "0";
+
+          const awaySplit = match.awayScore.split('|');
+          const p2Sets = awaySplit[0]?.trim() || "0";
+          const p2Points = awaySplit[1]?.trim() || "0";
+
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem', backgroundColor: 'rgba(0,0,0,0.15)', border: '1px solid var(--border-color)', borderRadius: '8px', overflow: 'hidden' }}>
+                <thead>
+                  <tr style={{ backgroundColor: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
+                    <th style={{ textAlign: 'left', padding: '8px 12px' }}>PLAYERS</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'center' }}>S1</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'center' }}>S2</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'center' }}>S3</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'center', color: 'var(--brand-yellow)' }}>PT</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style={{ borderBottom: '1px dashed rgba(255,255,255,0.05)' }}>
+                    <td style={{ padding: '10px 12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ width: '6px', height: '6px', backgroundColor: 'var(--brand-emerald)', borderRadius: '50%', display: 'inline-block' }} />
+                      {match.homeTeam}
+                    </td>
+                    <td style={{ textAlign: 'center' }}>6</td>
+                    <td style={{ textAlign: 'center' }}>4</td>
+                    <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{p1Sets}</td>
+                    <td style={{ textAlign: 'center', fontWeight: 800, color: 'var(--brand-yellow)' }}>{p1Points}</td>
+                  </tr>
+                  <tr>
+                    <td style={{ padding: '10px 12px', fontWeight: 600 }}>
+                      {match.awayTeam}
+                    </td>
+                    <td style={{ textAlign: 'center' }}>3</td>
+                    <td style={{ textAlign: 'center' }}>6</td>
+                    <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{p2Sets}</td>
+                    <td style={{ textAlign: 'center', fontWeight: 800, color: 'var(--brand-yellow)' }}>{p2Points}</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              {/* Match Stats */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '8px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '2px' }}>
+                    <span>First Serve %</span>
+                    <span>68% vs 61%</span>
+                  </div>
+                  <div style={{ display: 'flex', height: '4px', borderRadius: '2px', backgroundColor: 'rgba(255,255,255,0.1)' }}>
+                    <div style={{ width: '68%', backgroundColor: 'var(--brand-emerald)' }} />
+                    <div style={{ width: '32%', backgroundColor: '#666' }} />
+                  </div>
+                </div>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '2px' }}>
+                    <span>Aces / Double Faults</span>
+                    <span>8 / 2 vs 5 / 4</span>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          );
+        })()}
+
+        {/* CASE 3: General Sport Stats (Soccer, Basketball, Esports) */}
+        {match.sport !== 'Cricket' && match.sport !== 'Tennis' && (
+          <>
+            {/* Possession */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '4px' }}>
+                <span>Possession</span>
+                <span>{homeStat}% vs {awayStat}%</span>
+              </div>
+              <div style={{ display: 'flex', height: '6px', borderRadius: '3px', overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0.1)' }}>
+                <div style={{ width: `${homeStat}%`, backgroundColor: 'var(--brand-yellow)', transition: 'width 0.5s ease' }} />
+                <div style={{ width: `${awayStat}%`, backgroundColor: '#e0e0e0', transition: 'width 0.5s ease' }} />
+              </div>
+            </div>
+
+            {/* Shots */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '4px' }}>
+                <span>{match.sport === 'Esports' ? 'Kills' : 'Dangerous Attacks'}</span>
+                <span>{homeShots} vs {awayShots}</span>
+              </div>
+              <div style={{ display: 'flex', height: '6px', borderRadius: '3px', overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0.1)' }}>
+                <div style={{ width: `${homeShotsPercent}%`, backgroundColor: 'var(--brand-teal-nav)', transition: 'width 0.5s ease' }} />
+                <div style={{ width: `${100 - homeShotsPercent}%`, backgroundColor: '#757575', transition: 'width 0.5s ease' }} />
+              </div>
+            </div>
+
+            {/* Corners */}
+            {match.sport === 'Soccer' && (
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '4px' }}>
+                  <span>Corners</span>
+                  <span>{homeCorners} vs {awayCorners}</span>
+                </div>
+                <div style={{ display: 'flex', height: '6px', borderRadius: '3px', overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0.1)' }}>
+                  <div style={{ width: `${homeCornersPercent}%`, backgroundColor: 'var(--live-green)', transition: 'width 0.5s ease' }} />
+                  <div style={{ width: `${100 - homeCornersPercent}%`, backgroundColor: '#9e9e9e', transition: 'width 0.5s ease' }} />
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

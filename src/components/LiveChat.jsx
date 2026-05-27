@@ -10,11 +10,11 @@ const LiveChatCustomLogo = () => (
   </svg>
 );
 
-export default function LiveChat() {
+export default function LiveChat({ matches = [] }) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     { sender: 'agent', text: 'Hello Bunty! Welcome to Predicto11 Live Help Chat.' },
-    { sender: 'agent', text: "How can I help you? Try typing keywords like 'deposit', 'fiat', 'withdraw', or 'bets' for instant responses!" }
+    { sender: 'agent', text: "How can I help you? Try asking me for match tips (e.g. 'csk vs mi prediction', 'give me a tip', 'who will win') or keywords like 'deposit', 'withdraw', 'bets'!" }
   ]);
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef(null);
@@ -36,11 +36,39 @@ export default function LiveChat() {
 
     // Bot Response Logic after 1s
     setTimeout(() => {
-      let botResponse = "Thank you for reaching out! A support operator will be online shortly. You can try typing keywords like 'deposit', 'fiat', or 'bets'.";
+      let botResponse = "Thank you for reaching out! A support operator will be online shortly. You can ask me for live match predictions (e.g. 'CSK match prediction') or details on deposits/withdrawals.";
       const normalized = userText.toLowerCase();
 
-      if (normalized.includes('deposit')) {
-        botResponse = "To deposit crypto: 1. Click the '+' button in your balance widget. 2. Select USDT, BTC, or ETH. 3. Enter the amount to preview converted fiat. 4. Confirm deposit to credit your account instantly!";
+      // Find if user is asking about a specific team
+      const matched = matches.find(m => 
+        m.homeTeam.toLowerCase().includes(normalized) || 
+        m.awayTeam.toLowerCase().includes(normalized) ||
+        (normalized.includes('csk') && m.homeTeam.toLowerCase().includes('chennai') || m.awayTeam.toLowerCase().includes('chennai')) ||
+        (normalized.includes('mi') && m.homeTeam.toLowerCase().includes('mumbai') || m.awayTeam.toLowerCase().includes('mumbai')) ||
+        (normalized.includes('manchester') && m.homeTeam.toLowerCase().includes('manchester') || m.awayTeam.toLowerCase().includes('manchester')) ||
+        (normalized.includes('navi') && m.homeTeam.toLowerCase().includes('natus') || m.awayTeam.toLowerCase().includes('natus'))
+      );
+
+      if (matched) {
+        const homeOdds = matched.odds.home || 'N/A';
+        const awayOdds = matched.odds.away || 'N/A';
+        const drawOdds = matched.odds.draw || 'N/A';
+        const statusText = matched.eventStatus ? ` (${matched.eventStatus})` : '';
+
+        botResponse = `🎯 AI Match Advisor: In ${matched.homeTeam} v ${matched.awayTeam} (${matched.sport} - ${matched.league}), the live score is ${matched.homeScore} - ${matched.awayScore} at ${matched.time}${statusText}. 
+Current Odds: ${matched.homeTeam} at ${homeOdds}, Draw at ${drawOdds}, ${matched.awayTeam} at ${awayOdds}. 
+Based on our prediction model, we recommend a smart value bet on ${parseFloat(homeOdds) < parseFloat(awayOdds) ? matched.homeTeam : matched.awayTeam} for stable returns, or back the underdog if you want high-yield potential!`;
+      } else if (normalized.includes('tip') || normalized.includes('predict') || normalized.includes('advice') || normalized.includes('win')) {
+        // Find first live match
+        const liveMatch = matches.find(m => m.status === 'live');
+        if (liveMatch) {
+          botResponse = `🔮 Predicto11 AI Tip: Look at the live match ${liveMatch.homeTeam} v ${liveMatch.awayTeam}. The score is ${liveMatch.homeScore} - ${liveMatch.awayScore} (${liveMatch.time}). 
+We suggest betting on ${liveMatch.odds.home < liveMatch.odds.away ? liveMatch.homeTeam : liveMatch.awayTeam} (odds: ${liveMatch.odds.home < liveMatch.odds.away ? liveMatch.odds.home : liveMatch.odds.away}) as they have control over the current game momentum!`;
+        } else {
+          botResponse = "Currently, there are no live matches running in our simulation database. Please check back when matches are active!";
+        }
+      } else if (normalized.includes('deposit')) {
+        botResponse = "To deposit: 1. Click the '+' button in your balance widget. 2. Select UPI/Bank Transfer for Indian Rupees (INR) or Crypto (USDT, BTC, ETH) for direct tokens. 3. Enter details & submit UTR code to credit your account instantly!";
       } else if (normalized.includes('fiat') || normalized.includes('currency')) {
         botResponse = "You can change display currencies between INR (₹), USD ($), and EUR (€) using the dropdown selector in the header navigation.";
       } else if (normalized.includes('withdraw')) {

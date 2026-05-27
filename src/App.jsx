@@ -357,7 +357,7 @@ function MainAppContent() {
       />
 
       {/* Floating Live Chatbot Support */}
-      <LiveChat />
+      <LiveChat matches={matches} />
     </div>
   );
 }
