@@ -36,6 +36,42 @@ export default function MatchTracker({ match }) {
     return () => clearInterval(interval);
   }, [match.id]);
 
+  const [liveDetails, setLiveDetails] = useState(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+
+  useEffect(() => {
+    if (!match || !match.id || !match.id.toString().startsWith('entity-')) {
+      setLiveDetails(null);
+      setLoadingDetails(false);
+      return;
+    }
+
+    const ENTITY_SPORT_TOKEN = import.meta.env.VITE_ENTITY_SPORT_TOKEN || "5717631d2f48dc84c89999441a762463";
+    const matchId = match.id.replace('entity-', '');
+
+    const fetchDetails = async () => {
+      try {
+        const res = await fetch(`https://restapi.entitysport.com/v2/matches/${matchId}/live/?token=${ENTITY_SPORT_TOKEN}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.status === 'ok') {
+            setLiveDetails(data.response);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching live scorecard details:", err);
+      } finally {
+        setLoadingDetails(false);
+      }
+    };
+
+    setLoadingDetails(true);
+    fetchDetails();
+    const interval = setInterval(fetchDetails, 15000); // refresh every 15s
+
+    return () => clearInterval(interval);
+  }, [match.id]);
+
   // Extract stats
   const homeStat = match.stats?.possession?.[0] || 50;
   const awayStat = match.stats?.possession?.[1] || 50;
@@ -241,7 +277,9 @@ export default function MatchTracker({ match }) {
         }}>
           <Zap size={14} style={{ color: 'var(--brand-yellow)', animation: pulse ? 'bounce 0.5s infinite' : 'none' }} />
           <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#ffffff' }}>
-            {match.eventStatus || "Game in progress"}
+            {match.id.toString().startsWith('entity-') && liveDetails?.commentaries?.[0]?.commentary 
+              ? liveDetails.commentaries[0].commentary 
+              : (match.eventStatus || "Game in progress")}
           </span>
         </div>
       </div>
@@ -251,23 +289,56 @@ export default function MatchTracker({ match }) {
         
         {/* CASE 1: Cricket Scoreboard */}
         {match.sport === 'Cricket' && (() => {
-          const awayParts = match.awayScore.split('/');
-          const cRuns = parseInt(awayParts[0]) || 0;
-          const cWickets = parseInt(awayParts[1]) || 0;
-          const cOvers = match.time || "0.0";
-          const ovSplit = cOvers.split(' ')[0].split('.');
-          const completedOvers = parseInt(ovSplit[0]) || 0;
-          const currentBalls = parseInt(ovSplit[1]) || 0;
-          const ballsBowled = (completedOvers * 6) + currentBalls;
-          const crr = ballsBowled > 0 ? ((cRuns / ballsBowled) * 6).toFixed(2) : "0.00";
-          
-          const target = 175;
-          const runsNeeded = target - cRuns;
-          const ballsRemaining = Math.max(0, 120 - ballsBowled);
-          const rrr = ballsRemaining > 0 ? ((runsNeeded / ballsRemaining) * 6).toFixed(2) : "0.00";
+          const isEntity = match.id.toString().startsWith('entity-');
+          let cRuns = 0;
+          let cWickets = 0;
+          let completedOvers = 0;
+          let currentBalls = 0;
+          let crr = "0.00";
+          let rrr = "0.00";
+          let recentBalls = [];
+          let activeBatsmen = [];
+          let activeBowlers = [];
 
-          // Generate simulated delivery sequence (last 6 balls)
-          const lastBalls = [1, 4, 'W', 0, 6, 1];
+          if (isEntity && liveDetails) {
+            const scoreObj = liveDetails.live_score || {};
+            cRuns = scoreObj.runs || 0;
+            cWickets = scoreObj.wickets || 0;
+            const oversVal = scoreObj.overs || 0;
+            const ovSplit = oversVal.toString().split('.');
+            completedOvers = parseInt(ovSplit[0]) || 0;
+            currentBalls = parseInt(ovSplit[1]) || 0;
+            crr = scoreObj.runrate || "0.00";
+            rrr = scoreObj.required_runrate || "0.00";
+
+            if (liveDetails.live_inning?.recent_scores) {
+              const rawScores = liveDetails.live_inning.recent_scores.split(',');
+              recentBalls = rawScores.slice(-6).map(ball => ball.trim());
+            } else {
+              recentBalls = [0, 0, 0, 0, 0, 0];
+            }
+
+            activeBatsmen = liveDetails.batsmen || [];
+            activeBowlers = liveDetails.bowlers || [];
+          } else {
+            // Simulator fallback
+            const awayParts = match.awayScore.split('/');
+            cRuns = parseInt(awayParts[0]) || 0;
+            cWickets = parseInt(awayParts[1]) || 0;
+            const cOvers = match.time || "0.0";
+            const ovSplit = cOvers.split(' ')[0].split('.');
+            completedOvers = parseInt(ovSplit[0]) || 0;
+            currentBalls = parseInt(ovSplit[1]) || 0;
+            const ballsBowled = (completedOvers * 6) + currentBalls;
+            crr = ballsBowled > 0 ? ((cRuns / ballsBowled) * 6).toFixed(2) : "0.00";
+            
+            const target = 175;
+            const runsNeeded = target - cRuns;
+            const ballsRemaining = Math.max(0, 120 - ballsBowled);
+            rrr = ballsRemaining > 0 ? ((runsNeeded / ballsRemaining) * 6).toFixed(2) : "0.00";
+
+            recentBalls = [1, 4, 'W', 0, 6, 1];
+          }
 
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -304,40 +375,62 @@ export default function MatchTracker({ match }) {
                   <span>R (B)</span>
                   <span>4s / 6s</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px dashed rgba(255,255,255,0.05)' }}>
-                  <span style={{ color: 'var(--brand-yellow)' }}>R. Gaikwad *</span>
-                  <span>58 (42)</span>
-                  <span>4 / 2</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
-                  <span>S. Dube</span>
-                  <span>14 (9)</span>
-                  <span>1 / 1</span>
-                </div>
+                {activeBatsmen.length > 0 ? (
+                  activeBatsmen.map((b, idx) => (
+                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: idx === 0 ? '1px dashed rgba(255,255,255,0.05)' : 'none' }}>
+                      <span style={{ color: 'var(--brand-yellow)' }}>{b.name} *</span>
+                      <span>{b.runs} ({b.balls_faced})</span>
+                      <span>{b.fours} / {b.sixes}</span>
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px dashed rgba(255,255,255,0.05)' }}>
+                      <span style={{ color: 'var(--brand-yellow)' }}>R. Gaikwad *</span>
+                      <span>58 (42)</span>
+                      <span>4 / 2</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
+                      <span>S. Dube</span>
+                      <span>14 (9)</span>
+                      <span>1 / 1</span>
+                    </div>
+                  </>
+                )}
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border-color)', borderBottom: '1px solid var(--border-color)', margin: '8px 0 4px 0', padding: '4px 0', fontWeight: 'bold', color: 'var(--text-muted)' }}>
                   <span>Bowler</span>
                   <span>O-M-R-W</span>
                   <span>Econ</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
-                  <span>J. Bumrah</span>
-                  <span>3.2 - 0 - 24 - 2</span>
-                  <span>7.20</span>
-                </div>
+                {activeBowlers.length > 0 ? (
+                  activeBowlers.map((bw, idx) => (
+                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
+                      <span>{bw.name}</span>
+                      <span>{bw.overs} - {bw.maidens} - {bw.runs_conceded} - {bw.wickets}</span>
+                      <span>{bw.econ || (bw.overs > 0 ? (bw.runs_conceded / bw.overs).toFixed(2) : "0.00")}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
+                    <span>J. Bumrah</span>
+                    <span>3.2 - 0 - 24 - 2</span>
+                    <span>7.20</span>
+                  </div>
+                )}
               </div>
 
               {/* Delivery log */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>THIS OVER:</span>
                 <div style={{ display: 'flex', gap: '4px' }}>
-                  {lastBalls.map((b, idx) => (
+                  {recentBalls.map((b, idx) => (
                     <span key={idx} style={{
                       width: '20px',
                       height: '20px',
                       borderRadius: '50%',
-                      backgroundColor: b === 'W' ? 'var(--live-red)' : b === 4 || b === 6 ? 'var(--brand-emerald)' : 'rgba(255,255,255,0.1)',
-                      color: b === 'W' || b === 4 || b === 6 ? '#080a0f' : '#ffffff',
+                      backgroundColor: b === 'W' || b === 'w' ? 'var(--live-red)' : b === 4 || b === '4' || b === 6 || b === '6' ? 'var(--brand-emerald)' : 'rgba(255,255,255,0.1)',
+                      color: b === 'W' || b === 'w' || b === 4 || b === '4' || b === 6 || b === '6' ? '#080a0f' : '#ffffff',
                       fontSize: '0.65rem',
                       fontWeight: 800,
                       display: 'flex',
