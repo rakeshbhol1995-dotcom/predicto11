@@ -153,6 +153,8 @@ export default function CasinoLobby() {
   const animationFrameRef = useRef(null);
   const canvasRef = useRef(null);
   const flightHumAudioRef = useRef(null);
+  const particlesRef = useRef([]);
+  const starParticlesRef = useRef([]);
 
   // 4. Fortune Wheel States
   const [wheelSpinning, setWheelSpinning] = useState(false);
@@ -572,19 +574,64 @@ export default function CasinoLobby() {
 
     ctx.clearRect(0, 0, W, H);
 
-    // Draw Grid Lines moving downwards/leftwards to simulate flight velocity!
+    // Initialize cosmic stars if empty
+    if (starParticlesRef.current.length === 0) {
+      const stars = [];
+      for (let i = 0; i < 25; i++) {
+        stars.push({
+          x: Math.random() * W,
+          y: Math.random() * (H - 40),
+          size: Math.random() * 1.5 + 0.5,
+          speedMultiplier: Math.random() * 0.8 + 0.4
+        });
+      }
+      starParticlesRef.current = stars;
+    }
+
+    // Dynamic flight velocity progress mapping
+    const progress = Math.min(1.0, (currMult - 1.00) / 10);
+
+    // 1. Update and Draw Parallax Starfield & Cosmic Speed Dust Trails
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    starParticlesRef.current.forEach(star => {
+      // Cosmic stars fly backward faster as the flight gains speed!
+      const speedX = star.speedMultiplier * (2 + progress * 7);
+      const speedY = star.speedMultiplier * (0.8 + progress * 3);
+      
+      star.x -= speedX;
+      star.y += speedY;
+      
+      // Infinite wrap around screen boundaries
+      if (star.x < 0 || star.y > H - 40) {
+        star.x = W + Math.random() * 30;
+        star.y = Math.random() * (H - 60);
+      }
+      
+      // Render beautiful purple speed trails for high velocity feel!
+      ctx.beginPath();
+      ctx.strokeStyle = `rgba(168, 85, 247, ${0.12 * star.speedMultiplier * (1 + progress)})`;
+      ctx.lineWidth = star.size * 1.5;
+      ctx.moveTo(star.x, star.y);
+      ctx.lineTo(star.x + speedX * 1.8, star.y - speedY * 1.8);
+      ctx.stroke();
+      
+      // Draw cosmic dot itself
+      ctx.beginPath();
+      ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // Draw Grid Lines moving velocity
     const timeOffset = timeElapsedRef.current ? (timeElapsedRef.current * 0.12) % 40 : 0;
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.035)';
     ctx.lineWidth = 1;
     
-    // Vertical grid
     for (let x = -timeOffset; x < W; x += 40) {
       ctx.beginPath();
       ctx.moveTo(x, 0);
       ctx.lineTo(x, H - 40);
       ctx.stroke();
     }
-    // Horizontal grid
     for (let y = timeOffset; y < H - 40; y += 40) {
       ctx.beginPath();
       ctx.moveTo(0, y);
@@ -600,28 +647,28 @@ export default function CasinoLobby() {
     ctx.lineTo(W, H - 40);
     ctx.stroke();
 
-    // Map flight path: Starts at (40, H-40) and curves exponentially up to top right
+    // Map base flight path coordinates
     const startX = 45;
     const startY = H - 40;
-
-    // Plot jet coordinate along curve based on progress
-    // Max W reached at roughly multiplier 15x or capped at 80% width
-    const progress = Math.min(1.0, (currMult - 1.00) / 10); 
     const jetX = startX + progress * (W - 120);
     const jetY = startY - Math.pow(progress, 1.8) * (H - 120);
 
+    // Apply high-frequency turbulence shake that intensifies as multiplier grows!
+    const turbulence = (crashState === 'flying' && !isCrashed) ? (Math.random() - 0.5) * (0.8 + progress * 2.5) : 0;
+    const shakenJetX = jetX + turbulence * 0.7;
+    const shakenJetY = jetY + turbulence;
+
     if (currMult > 1.00) {
       // 1. Draw glowing translucent gradient under flight curve path
-      const grad = ctx.createLinearGradient(0, jetY, 0, startY);
+      const grad = ctx.createLinearGradient(0, shakenJetY, 0, startY);
       grad.addColorStop(0, 'rgba(244, 63, 94, 0.35)');
       grad.addColorStop(1, 'rgba(244, 63, 94, 0.0)');
       
       ctx.fillStyle = grad;
       ctx.beginPath();
       ctx.moveTo(startX, startY);
-      // Draw bezier path
-      ctx.quadraticCurveTo((startX + jetX) / 2, startY, jetX, jetY);
-      ctx.lineTo(jetX, startY);
+      ctx.quadraticCurveTo((startX + shakenJetX) / 2, startY, shakenJetX, shakenJetY);
+      ctx.lineTo(shakenJetX, startY);
       ctx.closePath();
       ctx.fill();
 
@@ -632,33 +679,103 @@ export default function CasinoLobby() {
       ctx.lineWidth = 3.5;
       ctx.beginPath();
       ctx.moveTo(startX, startY);
-      ctx.quadraticCurveTo((startX + jetX) / 2, startY, jetX, jetY);
+      ctx.quadraticCurveTo((startX + shakenJetX) / 2, startY, shakenJetX, shakenJetY);
       ctx.stroke();
       
-      // Reset shadows
       ctx.shadowBlur = 0;
     }
 
-    // 3. Draw Plane jet silhouette emoji with rotation along slope
+    const flightAngle = -Math.atan2(startY - shakenJetY, shakenJetX - startX) * 0.7;
+
+    // 2. Spawn and Draw Engine Exhaust Smoke / Fire particles
+    if (crashState === 'flying' && !isCrashed) {
+      // Find exact engine coordinate at rear of the fuselage
+      const engineX = shakenJetX - Math.cos(flightAngle) * 15;
+      const engineY = shakenJetY - Math.sin(flightAngle) * 15;
+      
+      // Spawn new thruster particles in each frame
+      for (let i = 0; i < 2; i++) {
+        particlesRef.current.push({
+          x: engineX,
+          y: engineY,
+          vx: -Math.cos(flightAngle + (Math.random() - 0.5) * 0.35) * (Math.random() * 2.5 + 1.2),
+          vy: -Math.sin(flightAngle + (Math.random() - 0.5) * 0.35) * (Math.random() * 2.5 + 1.2),
+          size: Math.random() * 4.5 + 2.0,
+          color: Math.random() < 0.35 ? '#ff3e6c' : Math.random() < 0.75 ? '#ff8800' : '#ffd700',
+          alpha: 1.0,
+          decay: Math.random() * 0.04 + 0.025
+        });
+      }
+    }
+
+    // Update, render, and filter active exhaust smoke particles
+    particlesRef.current = particlesRef.current.filter(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.alpha -= p.decay;
+      
+      if (p.alpha <= 0) return false;
+      
+      ctx.save();
+      ctx.globalAlpha = p.alpha;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      // Bright neon glowing particles
+      ctx.shadowBlur = 8;
+      ctx.shadowColor = p.color;
+      ctx.fill();
+      ctx.restore();
+      return true;
+    });
+
+    // 3. Draw Supersconic Thruster Engine Fire Cone
+    if (!isCrashed && crashState === 'flying') {
+      ctx.save();
+      ctx.translate(shakenJetX, shakenJetY);
+      ctx.rotate(flightAngle);
+      
+      // Bright jittering engine fire
+      const flameLength = 16 + Math.random() * 10;
+      const gradFlame = ctx.createLinearGradient(-12, 0, -12 - flameLength, 0);
+      gradFlame.addColorStop(0, '#ffffff');
+      gradFlame.addColorStop(0.2, '#ffd700');
+      gradFlame.addColorStop(0.5, '#ff8800');
+      gradFlame.addColorStop(1, 'rgba(255, 62, 108, 0)');
+      
+      ctx.fillStyle = gradFlame;
+      ctx.shadowBlur = 18;
+      ctx.shadowColor = '#ff8800';
+      
+      ctx.beginPath();
+      ctx.moveTo(-11, -4.5);
+      ctx.lineTo(-11 - flameLength, 0);
+      ctx.lineTo(-11, 4.5);
+      ctx.closePath();
+      ctx.fill();
+      
+      ctx.restore();
+    }
+
+    // 4. Draw supersonic jet silhouette
     if (!isCrashed) {
       ctx.save();
-      ctx.translate(jetX, jetY);
-      // Rotate roughly based on slope
-      const angle = -Math.atan2(startY - jetY, jetX - startX) * 0.7;
-      ctx.rotate(angle);
+      ctx.translate(shakenJetX, shakenJetY);
+      ctx.rotate(flightAngle);
       ctx.font = '24px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      // Shadow glow for plane jet
-      ctx.shadowBlur = 12;
+      
+      // Supreme neon outline shadow for airplane emoji!
+      ctx.shadowBlur = 14;
       ctx.shadowColor = 'var(--brand-yellow)';
       ctx.fillText('✈️', 0, 0);
       ctx.restore();
     } else {
-      // Draw massive boom explosion
+      // Draw massive boom explosion wave
       ctx.save();
-      ctx.translate(jetX, jetY);
-      ctx.font = '40px sans-serif';
+      ctx.translate(shakenJetX, shakenJetY);
+      ctx.font = '42px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('💥', 0, 0);
