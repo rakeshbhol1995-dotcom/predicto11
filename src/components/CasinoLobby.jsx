@@ -757,19 +757,81 @@ export default function CasinoLobby() {
       ctx.restore();
     }
 
-    // 4. Draw supersonic jet silhouette
+    // 4. Draw custom vector supersonic jet silhouette (replaces unreliable system emoji fonts)
     if (!isCrashed) {
       ctx.save();
       ctx.translate(shakenJetX, shakenJetY);
       ctx.rotate(flightAngle);
-      ctx.font = '24px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
       
-      // Supreme neon outline shadow for airplane emoji!
-      ctx.shadowBlur = 14;
-      ctx.shadowColor = 'var(--brand-yellow)';
-      ctx.fillText('✈️', 0, 0);
+      // Neon thruster glow shadow
+      ctx.shadowBlur = 16;
+      ctx.shadowColor = '#c6ff00';
+      
+      // Swept back wings (fiery orange trims)
+      ctx.fillStyle = '#ff8800';
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1;
+      
+      // Left swept wing
+      ctx.beginPath();
+      ctx.moveTo(-2, -3);
+      ctx.lineTo(-12, -18);
+      ctx.lineTo(-18, -18);
+      ctx.lineTo(-8, -3);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Right swept wing
+      ctx.beginPath();
+      ctx.moveTo(-2, 3);
+      ctx.lineTo(-12, 18);
+      ctx.lineTo(-18, 18);
+      ctx.lineTo(-8, 3);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Tail Stabilizer wings
+      ctx.fillStyle = '#c6ff00';
+      ctx.beginPath();
+      ctx.moveTo(-12, -3);
+      ctx.lineTo(-18, -9);
+      ctx.lineTo(-20, -9);
+      ctx.lineTo(-16, -3);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(-12, 3);
+      ctx.lineTo(-18, 9);
+      ctx.lineTo(-20, 9);
+      ctx.lineTo(-16, 3);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Main Fuselage body (glowing golden shell)
+      ctx.fillStyle = '#ffd700';
+      ctx.beginPath();
+      ctx.moveTo(16, 0); // supersonic nose tip pointing forward
+      ctx.quadraticCurveTo(8, -5, -12, -4);
+      ctx.lineTo(-15, 0); // rear engine nozzle
+      ctx.lineTo(-12, 4);
+      ctx.quadraticCurveTo(8, 5, 16, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Glowing glass cockpit windshield (cyan fluorescent)
+      ctx.fillStyle = '#00ffaa';
+      ctx.shadowBlur = 6;
+      ctx.shadowColor = '#00ffaa';
+      ctx.beginPath();
+      ctx.ellipse(3, 0, 4, 1.8, 0, 0, Math.PI * 2);
+      ctx.fill();
+
       ctx.restore();
     } else {
       // Draw massive boom explosion wave
