@@ -114,7 +114,8 @@ const CasinoCustomLogo = () => (
 export default function CasinoLobby() {
   const { 
     user, balance, fiatSymbol, convertFiatToUsdt, convertUsdtToFiat, 
-    adjustCryptoBalance, addWagerVolume, spinDailyWheel, lastSpinTimestamp 
+    adjustCryptoBalance, addWagerVolume, spinDailyWheel, lastSpinTimestamp,
+    creditDailyWheelPrize
   } = useBet();
   
   const [activeGame, setActiveGame] = useState('lobby'); // 'lobby' | 'slots' | 'roulette' | 'crash' | 'fortune'
@@ -959,6 +960,10 @@ export default function CasinoLobby() {
       
       if (result.success) {
         setFeedback(result.message);
+        // Delay reward credit until wheel visually finishes spinning!
+        if (result.prize > 0) {
+          creditDailyWheelPrize(result.prize);
+        }
         playCasinoSound(result.prize > 0 ? 'win' : 'lose', soundEnabled);
       } else {
         setErrorMessage(result.message);

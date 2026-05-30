@@ -83,7 +83,7 @@ export const BetProvider = ({ children }) => {
     }
   };
 
-  // Daily Spin Wheel Reward Handler
+  // Daily Spin Wheel Reward Handler (Calculates prize and saves timestamp, delay credit until wheel stops)
   const spinDailyWheel = (mockBypass = false) => {
     const now = Date.now();
     const COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -104,14 +104,19 @@ export const BetProvider = ({ children }) => {
     else if (roll < 0.95) prize = 5; // 20% chance for $5 USDT
     else prize = 0; // 5% chance for $0 (empty sector)
     
-    if (prize > 0) {
-      setCryptoBalances(prev => ({
-        ...prev,
-        usdt: parseFloat((prev.usdt + prize).toFixed(4))
-      }));
-    }
     setLastSpinTimestamp(now);
     return { success: true, prize, message: prize > 0 ? `Congratulations! You won $${prize} USDT!` : "Better luck next spin!" };
+  };
+
+  // Credits daily wheel prize after visual animation stops spinning
+  const creditDailyWheelPrize = (prize) => {
+    const amt = parseFloat(prize);
+    if (!isNaN(amt) && amt > 0) {
+      setCryptoBalances(prev => ({
+        ...prev,
+        usdt: parseFloat((prev.usdt + amt).toFixed(4))
+      }));
+    }
   };
 
   // Submit dynamic withdrawal request
@@ -506,6 +511,7 @@ export const BetProvider = ({ children }) => {
         addWagerVolume,
         lastSpinTimestamp,
         spinDailyWheel,
+        creditDailyWheelPrize,
         withdrawalRequests,
         submitWithdrawalRequest,
         approveWithdrawalRequest,
