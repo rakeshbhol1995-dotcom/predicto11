@@ -2,6 +2,35 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useBet } from '../context/BetContext';
 import { Trophy, HelpCircle, AlertTriangle, Disc, RefreshCw, Volume2, VolumeX, Plane, Star, Coins, Zap, RefreshCcw } from 'lucide-react';
 
+// Polyfill Canvas roundRect for older browser engines and compatibility
+if (typeof window !== 'undefined' && window.CanvasRenderingContext2D && !window.CanvasRenderingContext2D.prototype.roundRect) {
+  window.CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+    if (typeof r === 'undefined') r = 0;
+    let radii = [0, 0, 0, 0];
+    if (typeof r === 'number') {
+      radii = [r, r, r, r];
+    } else if (Array.isArray(r)) {
+      if (r.length === 1) radii = [r[0], r[0], r[0], r[0]];
+      else if (r.length === 2) radii = [r[0], r[1], r[0], r[1]];
+      else if (r.length === 4) radii = r;
+    }
+    
+    const [topLeft, topRight, bottomRight, bottomLeft] = radii;
+    
+    this.moveTo(x + topLeft, y);
+    this.lineTo(x + w - topRight, y);
+    this.arcTo(x + w, y, x + w, y + topRight, topRight);
+    this.lineTo(x + w, y + h - bottomRight, bottomRight);
+    this.arcTo(x + w, y + h, x + w - bottomRight, y + h, bottomRight);
+    this.lineTo(x + bottomLeft, y + h);
+    this.arcTo(x, y + h, x, y + h - bottomLeft, bottomLeft);
+    this.lineTo(x, y + topLeft);
+    this.arcTo(x, y, x + topLeft, y, topLeft);
+    this.closePath();
+    return this;
+  };
+}
+
 const playCasinoSound = (type, soundEnabled = true) => {
   if (!soundEnabled) return;
   try {
