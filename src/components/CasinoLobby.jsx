@@ -1241,7 +1241,7 @@ export default function CasinoLobby() {
               ref={canvasRef} 
               width={520} 
               height={270} 
-              style={{ width: '100%', height: '270px', display: 'block', backgroundColor: 'transparent' }}
+              style={{ width: '100%', height: 'auto', aspectRatio: '520 / 270', display: 'block', backgroundColor: 'transparent' }}
             />
 
             {/* Central massive multiplier readout */}
