@@ -157,6 +157,61 @@ export default function CasinoLobby() {
   const particlesRef = useRef([]);
   const starParticlesRef = useRef([]);
 
+  const crashStateRef = useRef('idle');
+  const multiplierRef = useRef(1.00);
+  const shockwaveRadiusRef = useRef(0);
+
+  useEffect(() => {
+    crashStateRef.current = crashState;
+  }, [crashState]);
+
+  useEffect(() => {
+    multiplierRef.current = multiplier;
+  }, [multiplier]);
+
+  const propellerAngleRef = useRef(0);
+  const pulseRef = useRef(0);
+
+  // Next-level continuous 8K render loop (runs continuously while crash game is active)
+  useEffect(() => {
+    if (activeGame !== 'crash') return;
+
+    let animFrame;
+    const renderLoop = () => {
+      const state = crashStateRef.current;
+      const mult = multiplierRef.current;
+      
+      // Rotate propeller: idle speed, rapid flight speed, or stop on crash
+      let speed = 0.15;
+      if (state === 'flying') {
+        speed = 0.45 + (mult - 1.0) * 0.05;
+      } else if (state === 'crashed') {
+        speed = 0.0;
+      }
+      propellerAngleRef.current = (propellerAngleRef.current + speed) % (Math.PI * 2);
+      
+      // Flash navigation lights
+      pulseRef.current += 0.05;
+
+      // Expand crash shockwave
+      if (state === 'crashed') {
+        shockwaveRadiusRef.current += 2.2;
+      } else {
+        shockwaveRadiusRef.current = 0;
+      }
+
+      drawCanvas();
+
+      animFrame = requestAnimationFrame(renderLoop);
+    };
+
+    animFrame = requestAnimationFrame(renderLoop);
+
+    return () => {
+      cancelAnimationFrame(animFrame);
+    };
+  }, [activeGame]);
+
   // 4. Fortune Wheel States
   const [wheelSpinning, setWheelSpinning] = useState(false);
   const [wheelRotation, setWheelRotation] = useState(0);
@@ -479,7 +534,6 @@ export default function CasinoLobby() {
     if (currMult >= crashTargetRef.current) {
       triggerCrash(currMult);
     } else {
-      drawCanvas(currMult);
       animationFrameRef.current = requestAnimationFrame(runFlightLoop);
     }
   };
@@ -496,9 +550,72 @@ export default function CasinoLobby() {
     playCasinoSound('aviator_crash', soundEnabled);
     setCrashState('crashed');
     setCrashHistory(prev => [finalMult, ...prev.slice(0, 8)]);
-    drawCanvas(finalMult, true);
+    
+    // Spawn spectacular exploding fireballs, debris chunks, and sparks!
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const W = canvas.width;
+      const H = canvas.height;
+      const progress = Math.min(1.0, (finalMult - 1.00) / 10);
+      const startX = 45;
+      const startY = H - 40;
+      const jetX = startX + progress * (W - 120);
+      const jetY = startY - Math.pow(progress, 1.8) * (H - 120);
 
-    // End round: wait 3 seconds, then reset to bettingcountdown
+      // Spawn Fireballs
+      for (let i = 0; i < 15; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 4 + 1.5;
+        particlesRef.current.push({
+          x: jetX,
+          y: jetY,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          size: Math.random() * 12 + 6,
+          color: Math.random() < 0.4 ? '#ff3e6c' : Math.random() < 0.8 ? '#ff8800' : '#ffd700',
+          alpha: 1.0,
+          decay: Math.random() * 0.02 + 0.015,
+          isFireball: true
+        });
+      }
+
+      // Spawn Sparks
+      for (let i = 0; i < 20; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 6 + 3;
+        particlesRef.current.push({
+          x: jetX,
+          y: jetY,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          size: Math.random() * 3 + 1,
+          color: '#ffffff',
+          alpha: 1.0,
+          decay: Math.random() * 0.04 + 0.02
+        });
+      }
+
+      // Spawn Debris Chunks (Grey plane pieces)
+      for (let i = 0; i < 8; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 3 + 1;
+        particlesRef.current.push({
+          x: jetX,
+          y: jetY,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          size: Math.random() * 6 + 3,
+          color: '#475569',
+          alpha: 1.0,
+          decay: Math.random() * 0.015 + 0.01,
+          isDebris: true,
+          rot: Math.random() * Math.PI * 2,
+          rotSpeed: (Math.random() - 0.5) * 0.2
+        });
+      }
+    }
+
+    // End round: wait 3.5 seconds, then reset to betting countdown
     setTimeout(() => {
       if (activeGame === 'crash') {
         setCrashState('betting');
@@ -565,8 +682,8 @@ export default function CasinoLobby() {
     }
   };
 
-  // Draw glowing canvas curve of Aviator Flight
-  const drawCanvas = (currMult, isCrashed = false) => {
+  // Draw glowing canvas curve of Aviator Flight (Integrated continuous particle renderer)
+  const drawCanvas = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -574,6 +691,9 @@ export default function CasinoLobby() {
     const H = canvas.height;
 
     ctx.clearRect(0, 0, W, H);
+
+    const state = crashStateRef.current;
+    const currMult = multiplierRef.current;
 
     // Initialize cosmic stars if empty
     if (starParticlesRef.current.length === 0) {
@@ -589,40 +709,43 @@ export default function CasinoLobby() {
       starParticlesRef.current = stars;
     }
 
-    // Dynamic flight velocity progress mapping
     const progress = Math.min(1.0, (currMult - 1.00) / 10);
 
-    // 1. Update and Draw Parallax Starfield & Cosmic Speed Dust Trails
+    // 1. Draw Star Parallax Space Dust Trails
     ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
     starParticlesRef.current.forEach(star => {
-      // Cosmic stars fly backward faster as the flight gains speed!
-      const speedX = star.speedMultiplier * (2 + progress * 7);
-      const speedY = star.speedMultiplier * (0.8 + progress * 3);
+      // Background stars always move to simulate flow!
+      const speedX = star.speedMultiplier * (state === 'flying' ? (2 + progress * 7) : state === 'crashed' ? 0.35 : 1.1);
+      const speedY = star.speedMultiplier * (state === 'flying' ? (0.8 + progress * 3) : state === 'crashed' ? 0.12 : 0.35);
       
+      // Update coordinates so space dust actually scrolls
       star.x -= speedX;
       star.y += speedY;
-      
-      // Infinite wrap around screen boundaries
-      if (star.x < 0 || star.y > H - 40) {
-        star.x = W + Math.random() * 30;
-        star.y = Math.random() * (H - 60);
+
+      // Wrap around screen boundaries
+      if (star.x < 0) {
+        star.x = W;
+        star.y = Math.random() * (H - 40);
       }
-      
-      // Render beautiful purple speed trails for high velocity feel!
+      if (star.y > H - 40) {
+        star.y = 0;
+        star.x = Math.random() * W;
+      }
+
+      // Render beautiful glowing purple speed lines
       ctx.beginPath();
-      ctx.strokeStyle = `rgba(168, 85, 247, ${0.12 * star.speedMultiplier * (1 + progress)})`;
+      ctx.strokeStyle = `rgba(168, 85, 247, ${0.12 * star.speedMultiplier * (state === 'flying' ? (1 + progress) : 0.8)})`;
       ctx.lineWidth = star.size * 1.5;
       ctx.moveTo(star.x, star.y);
       ctx.lineTo(star.x + speedX * 1.8, star.y - speedY * 1.8);
       ctx.stroke();
       
-      // Draw cosmic dot itself
       ctx.beginPath();
       ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
       ctx.fill();
     });
 
-    // Draw Grid Lines moving velocity
+    // Draw coordinate Grid Lines
     const timeOffset = timeElapsedRef.current ? (timeElapsedRef.current * 0.12) % 40 : 0;
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.035)';
     ctx.lineWidth = 1;
@@ -640,7 +763,7 @@ export default function CasinoLobby() {
       ctx.stroke();
     }
 
-    // Draw bottom border axis
+    // Draw coordinate grid bottom border axis
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -648,19 +771,35 @@ export default function CasinoLobby() {
     ctx.lineTo(W, H - 40);
     ctx.stroke();
 
-    // Map base flight path coordinates
+    // Map base coordinates
     const startX = 45;
     const startY = H - 40;
-    const jetX = startX + progress * (W - 120);
-    const jetY = startY - Math.pow(progress, 1.8) * (H - 120);
 
-    // Apply high-frequency turbulence shake that intensifies as multiplier grows!
-    const turbulence = (crashState === 'flying' && !isCrashed) ? (Math.random() - 0.5) * (0.8 + progress * 2.5) : 0;
+    // Coordinate variables based on state
+    let jetX = startX;
+    let jetY = startY;
+    let flightAngle = 0;
+
+    // Dynamic hover motion for plane engine idle waiting countdown!
+    const hoverY = (state === 'betting' || state === 'idle') ? Math.sin(Date.now() * 0.005) * 2.5 : 0;
+
+    if (state === 'flying' || state === 'crashed') {
+      jetX = startX + progress * (W - 120);
+      jetY = startY - Math.pow(progress, 1.8) * (H - 120);
+      flightAngle = -Math.atan2(startY - jetY, jetX - startX) * 0.7;
+    } else {
+      jetY = startY + hoverY;
+      flightAngle = -0.05; // slight nose up while idle
+    }
+
+    // Apply turbulence shake at high speed
+    const turbulence = (state === 'flying') ? (Math.random() - 0.5) * (0.8 + progress * 2.5) : 0;
     const shakenJetX = jetX + turbulence * 0.7;
     const shakenJetY = jetY + turbulence;
 
-    if (currMult > 1.00) {
-      // 1. Draw glowing translucent gradient under flight curve path
+    // Draw the climb bezier curve
+    if (currMult > 1.00 && (state === 'flying' || state === 'crashed')) {
+      // glowing translucent climb gradient
       const grad = ctx.createLinearGradient(0, shakenJetY, 0, startY);
       grad.addColorStop(0, 'rgba(244, 63, 94, 0.35)');
       grad.addColorStop(1, 'rgba(244, 63, 94, 0.0)');
@@ -673,7 +812,7 @@ export default function CasinoLobby() {
       ctx.closePath();
       ctx.fill();
 
-      // 2. Draw flight line path itself with neon red glow
+      // glowing neon climb line
       ctx.shadowBlur = 10;
       ctx.shadowColor = '#ff477e';
       ctx.strokeStyle = '#ff477e';
@@ -682,19 +821,14 @@ export default function CasinoLobby() {
       ctx.moveTo(startX, startY);
       ctx.quadraticCurveTo((startX + shakenJetX) / 2, startY, shakenJetX, shakenJetY);
       ctx.stroke();
-      
       ctx.shadowBlur = 0;
     }
 
-    const flightAngle = -Math.atan2(startY - shakenJetY, shakenJetX - startX) * 0.7;
-
-    // 2. Spawn and Draw Engine Exhaust Smoke / Fire particles
-    if (crashState === 'flying' && !isCrashed) {
-      // Find exact engine coordinate at rear of the fuselage
+    // 2. Spawn and Draw Engine Smoke/Fire Particles
+    if (state === 'flying') {
       const engineX = shakenJetX - Math.cos(flightAngle) * 15;
       const engineY = shakenJetY - Math.sin(flightAngle) * 15;
       
-      // Spawn new thruster particles in each frame
       for (let i = 0; i < 2; i++) {
         particlesRef.current.push({
           x: engineX,
@@ -707,37 +841,61 @@ export default function CasinoLobby() {
           decay: Math.random() * 0.04 + 0.025
         });
       }
+    } else if (state === 'betting') {
+      // Idle engine smoke sparks
+      if (Math.random() < 0.18) {
+        particlesRef.current.push({
+          x: startX - 12,
+          y: startY + hoverY,
+          vx: -0.6 - Math.random() * 0.6,
+          vy: (Math.random() - 0.5) * 0.25,
+          size: Math.random() * 3.0 + 1.2,
+          color: 'rgba(255, 136, 0, 0.45)',
+          alpha: 0.8,
+          decay: 0.015
+        });
+      }
     }
 
-    // Update, render, and filter active exhaust smoke particles
+    // Render active particles
     particlesRef.current = particlesRef.current.filter(p => {
       p.x += p.vx;
       p.y += p.vy;
       p.alpha -= p.decay;
-      
       if (p.alpha <= 0) return false;
       
       ctx.save();
       ctx.globalAlpha = p.alpha;
       ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      ctx.fillStyle = p.color;
-      // Bright neon glowing particles
-      ctx.shadowBlur = 8;
-      ctx.shadowColor = p.color;
-      ctx.fill();
+      
+      if (p.isDebris) {
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.color;
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 0.8;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+        ctx.strokeRect(-p.size / 2, -p.size / 2, p.size, p.size);
+        p.rot += p.rotSpeed;
+      } else {
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.shadowBlur = p.isFireball ? 12 : 8;
+        ctx.shadowColor = p.color;
+        ctx.fill();
+      }
+      
       ctx.restore();
       return true;
     });
 
-    // 3. Draw Supersconic Thruster Engine Fire Cone
-    if (!isCrashed && crashState === 'flying') {
+    // 3. Draw Supersonic Thruster Engine Fire Cone (flying or countdown idling)
+    if (state === 'flying' || state === 'betting') {
       ctx.save();
       ctx.translate(shakenJetX, shakenJetY);
       ctx.rotate(flightAngle);
       
-      // Bright jittering engine fire
-      const flameLength = 16 + Math.random() * 10;
+      const flameLength = (state === 'flying') ? (16 + Math.random() * 10) : (5 + Math.random() * 4);
       const gradFlame = ctx.createLinearGradient(-12, 0, -12 - flameLength, 0);
       gradFlame.addColorStop(0, '#ffffff');
       gradFlame.addColorStop(0.2, '#ffd700');
@@ -745,7 +903,7 @@ export default function CasinoLobby() {
       gradFlame.addColorStop(1, 'rgba(255, 62, 108, 0)');
       
       ctx.fillStyle = gradFlame;
-      ctx.shadowBlur = 18;
+      ctx.shadowBlur = state === 'flying' ? 18 : 8;
       ctx.shadowColor = '#ff8800';
       
       ctx.beginPath();
@@ -754,107 +912,236 @@ export default function CasinoLobby() {
       ctx.lineTo(-11, 4.5);
       ctx.closePath();
       ctx.fill();
-      
       ctx.restore();
     }
 
-    // 4. Draw custom vector supersonic jet silhouette (replaces unreliable system emoji fonts)
-    if (!isCrashed) {
+    // 4. Draw Custom 8K Retro Propeller Biplane
+    if (state !== 'crashed') {
       ctx.save();
       ctx.translate(shakenJetX, shakenJetY);
       ctx.rotate(flightAngle);
       
-      // Neon thruster glow shadow
-      ctx.shadowBlur = 16;
-      ctx.shadowColor = '#c6ff00';
+      const scale = 1.1;
+      ctx.scale(scale, scale);
       
-      // Swept back wings (fiery orange trims)
-      ctx.fillStyle = '#ff8800';
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = 'rgba(239, 68, 68, 0.65)'; // elegant red underglow
+      
+      // Upper wing (Behind fuselage)
+      ctx.fillStyle = '#ef4444';
       ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(-10, -28, 8, 25, 3);
+      ctx.fill();
+      ctx.stroke();
       
-      // Left swept wing
+      // White wing stripe
+      ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.moveTo(-2, -3);
-      ctx.lineTo(-12, -18);
-      ctx.lineTo(-18, -18);
-      ctx.lineTo(-8, -3);
+      ctx.roundRect(-8, -25, 4, 6, 1);
+      ctx.fill();
+      
+      // Pulsing Wing Navigation Light (Left = Red)
+      ctx.fillStyle = `rgba(239, 68, 68, ${0.4 + 0.6 * Math.sin(pulseRef.current * 2.5)})`;
+      ctx.shadowBlur = 8;
+      ctx.shadowColor = '#ef4444';
+      ctx.beginPath();
+      ctx.arc(-8, -26, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      
+      // Tail stabilizers & vertical fin
+      ctx.fillStyle = '#dc2626';
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(-22, 0);
+      ctx.lineTo(-32, -10);
+      ctx.lineTo(-28, -10);
+      ctx.lineTo(-18, 0);
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
-
-      // Right swept wing
+      
       ctx.beginPath();
-      ctx.moveTo(-2, 3);
-      ctx.lineTo(-12, 18);
-      ctx.lineTo(-18, 18);
-      ctx.lineTo(-8, 3);
+      ctx.moveTo(-22, 0);
+      ctx.lineTo(-32, 10);
+      ctx.lineTo(-28, 10);
+      ctx.lineTo(-18, 0);
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
-
-      // Tail Stabilizer wings
-      ctx.fillStyle = '#c6ff00';
-      ctx.beginPath();
-      ctx.moveTo(-12, -3);
-      ctx.lineTo(-18, -9);
-      ctx.lineTo(-20, -9);
-      ctx.lineTo(-16, -3);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.moveTo(-12, 3);
-      ctx.lineTo(-18, 9);
-      ctx.lineTo(-20, 9);
-      ctx.lineTo(-16, 3);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      // Main Fuselage body (glowing golden shell)
+      
+      // Vertical tail fin (gold rudder highlight)
       ctx.fillStyle = '#ffd700';
       ctx.beginPath();
-      ctx.moveTo(16, 0); // supersonic nose tip pointing forward
-      ctx.quadraticCurveTo(8, -5, -12, -4);
-      ctx.lineTo(-15, 0); // rear engine nozzle
-      ctx.lineTo(-12, 4);
-      ctx.quadraticCurveTo(8, 5, 16, 0);
+      ctx.moveTo(-20, 0);
+      ctx.quadraticCurveTo(-30, -5, -34, -14);
+      ctx.lineTo(-28, -14);
+      ctx.quadraticCurveTo(-22, -5, -16, 0);
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
-
-      // Glowing glass cockpit windshield (cyan fluorescent)
-      ctx.fillStyle = '#00ffaa';
-      ctx.shadowBlur = 6;
-      ctx.shadowColor = '#00ffaa';
+      
+      // Main Fuselage (aerodynamic gradient body)
+      const bodyGrad = ctx.createLinearGradient(-25, 0, 15, 0);
+      bodyGrad.addColorStop(0, '#991b1b');
+      bodyGrad.addColorStop(0.5, '#ef4444');
+      bodyGrad.addColorStop(1, '#f87171');
+      ctx.fillStyle = bodyGrad;
+      
       ctx.beginPath();
-      ctx.ellipse(3, 0, 4, 1.8, 0, 0, Math.PI * 2);
+      ctx.moveTo(18, 0);
+      ctx.quadraticCurveTo(8, -10, -22, -6);
+      ctx.lineTo(-24, 0);
+      ctx.quadraticCurveTo(-22, 10, 18, 0);
+      ctx.closePath();
       ctx.fill();
-
+      ctx.stroke();
+      
+      // Detailed panel rivet lines
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(-10, -7);
+      ctx.lineTo(-10, 7);
+      ctx.moveTo(0, -8);
+      ctx.lineTo(0, 8);
+      ctx.stroke();
+      
+      // Chrome exhaust pipes
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(-5, 4, 6, 2.5);
+      ctx.fillRect(-5, -6.5, 6, 2.5);
+      
+      // Glass Cockpit
+      const cockpitGrad = ctx.createLinearGradient(0, -4, 10, 4);
+      cockpitGrad.addColorStop(0, '#38bdf8');
+      cockpitGrad.addColorStop(1, '#0284c7');
+      ctx.fillStyle = cockpitGrad;
+      ctx.shadowBlur = 6;
+      ctx.shadowColor = '#38bdf8';
+      ctx.beginPath();
+      ctx.ellipse(3, -1, 7, 3.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      
+      // Cockpit white reflection gleam
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.arc(3, -1, 5, -Math.PI / 3, 0);
+      ctx.stroke();
+      
+      // Pilot head silhouette
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(1, -1, 2, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Animated retracting landing gear
+      const gearRetract = state === 'flying' ? Math.min(1.0, progress * 2.0) : 0;
+      if (gearRetract < 0.95) {
+        ctx.save();
+        ctx.globalAlpha = 1.0 - gearRetract;
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 1.5;
+        
+        // Strut
+        ctx.beginPath();
+        ctx.moveTo(0, 5);
+        ctx.lineTo(-4 * (1 - gearRetract), 12 * (1 - gearRetract));
+        ctx.stroke();
+        
+        // Wheel
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath();
+        ctx.arc(-4 * (1 - gearRetract), 12 * (1 - gearRetract), 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        
+        ctx.restore();
+      }
+      
+      // Lower wing (in front of fuselage)
+      ctx.fillStyle = '#ef4444';
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(-8, 5, 8, 23, 3);
+      ctx.fill();
+      ctx.stroke();
+      
+      // White wing stripe
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.roundRect(-6, 8, 4, 6, 1);
+      ctx.fill();
+      
+      // Pulsing Wing Navigation Light (Right = Green)
+      ctx.fillStyle = `rgba(34, 197, 94, ${0.4 + 0.6 * Math.sin(pulseRef.current * 2.5 + Math.PI)})`;
+      ctx.shadowBlur = 8;
+      ctx.shadowColor = '#22c55e';
+      ctx.beginPath();
+      ctx.arc(-6, 23, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      
+      // Propeller Nose Spinner
+      ctx.fillStyle = '#e2e8f0';
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(17, 0, 4, -Math.PI / 2, Math.PI / 2);
+      ctx.fill();
+      ctx.stroke();
+      
+      // Spinning propeller blades
+      ctx.save();
+      ctx.translate(18, 0);
+      ctx.rotate(propellerAngleRef.current);
+      
+      // Blades blur disc
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 1.5, 24, 0, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Propeller tips yellow markers
+      ctx.fillStyle = 'rgba(254, 240, 138, 0.45)';
+      ctx.beginPath();
+      ctx.arc(0, -22, 2.5, 0, Math.PI * 2);
+      ctx.arc(0, 22, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Sharp metal blades
+      ctx.fillStyle = '#475569';
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.roundRect(-1, -22, 2, 22, 1);
+      ctx.roundRect(-1, 0, 2, 22, 1);
+      ctx.fill();
+      ctx.stroke();
+      
+      ctx.restore();
+      
       ctx.restore();
     } else {
-      // Draw massive boom explosion wave
-      ctx.save();
-      ctx.translate(shakenJetX, shakenJetY);
-      ctx.font = '42px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('💥', 0, 0);
-      ctx.restore();
-    }
-  };
-
-  // Initial draw loop for betting counting/idle state
-  useEffect(() => {
-    if (activeGame === 'crash' && crashState === 'betting') {
-      const canvas = canvasRef.current;
-      if (canvas) {
-        drawCanvas(1.00);
+      // 5. Draw Expanding shockwave rings (replaces basic text emojis!)
+      if (shockwaveRadiusRef.current < 75) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(255, 62, 108, ${Math.max(0, 1 - shockwaveRadiusRef.current / 75)})`;
+        ctx.lineWidth = 3.5;
+        ctx.arc(shakenJetX, shakenJetY, shockwaveRadiusRef.current, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
       }
     }
-  }, [activeGame, crashState]);
+  };
 
   // ----------------------------------------------------
   // VIP DAILY SPIN WHEEL ACTIONS
@@ -972,7 +1259,7 @@ export default function CasinoLobby() {
   };
 
   return (
-    <div className="casino-lobby-container" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto', height: '100%' }}>
+    <div className="casino-lobby-container">
       
       {/* Premium Gradient Header Banner */}
       <div style={{

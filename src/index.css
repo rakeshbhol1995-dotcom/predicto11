@@ -1306,5 +1306,29 @@ h1, h2, h3, h4, h5 {
   }
 }
 
+/* Casino Lobby Layout & Mobile Scroll Override */
+.casino-lobby-container {
+  height: 100%;
+  width: 100%;
+  min-height: 0;
+  overflow-y: auto !important;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-y !important;
+  overscroll-behavior-y: contain;
+}
+
+@media (max-width: 768px) {
+  .casino-lobby-container {
+    padding: 12px !important;
+    padding-bottom: 160px !important; /* Safe zone above bottom navbar */
+  }
+}
+
+
 
 
