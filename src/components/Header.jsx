@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useBet } from '../context/BetContext';
-import { Search, User, Wallet, Plus, Bell, Shield, LogOut } from 'lucide-react';
+import { Search, User, Wallet, Plus, Bell, Shield, LogOut, ArrowRightLeft, Crown } from 'lucide-react';
 
 const BrandLogo = () => (
   <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ filter: 'drop-shadow(0 0 8px rgba(5, 196, 139, 0.5))' }}>
@@ -11,7 +11,7 @@ const BrandLogo = () => (
 );
 
 export default function Header({ activeTab, setActiveTab, onOpenDeposit, onOpenAuth, currentView, setCurrentView, apiStatus, isLiveApi }) {
-  const { user, logoutUser, balance, selectedFiat, setSelectedFiat, fiatSymbol, cryptoBalances } = useBet();
+  const { user, logoutUser, balance, selectedFiat, setSelectedFiat, fiatSymbol, cryptoBalances, vipInfo } = useBet();
   const [showDropdown, setShowDropdown] = useState(false);
 
   const handleLogout = () => {
@@ -268,7 +268,7 @@ export default function Header({ activeTab, setActiveTab, onOpenDeposit, onOpenA
             {/* Profile Dropdown Toggle */}
             <div 
               onClick={() => setShowDropdown(!showDropdown)}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '4px 8px', borderRadius: '4px' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '4px 8px', borderRadius: '4px' }}
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)'}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
             >
@@ -280,11 +280,16 @@ export default function Header({ activeTab, setActiveTab, onOpenDeposit, onOpenA
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center',
-                border: '1px solid var(--border-color)'
+                border: '1px solid ' + (vipInfo?.color || 'var(--border-color)')
               }}>
-                <User size={14} style={{ color: '#ffffff' }} />
+                <Crown size={14} style={{ color: vipInfo?.color || '#ffffff' }} />
               </div>
-              <span style={{ fontSize: '0.8rem', fontWeight: 500, color: '#ffffff' }}>{user.username}</span>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#ffffff', lineHeight: 1.1 }}>{user.username}</span>
+                <span style={{ fontSize: '0.58rem', fontWeight: '900', color: vipInfo?.color || 'var(--brand-yellow)', letterSpacing: '0.5px' }}>
+                  {vipInfo?.tier}
+                </span>
+              </div>
             </div>
 
             {/* Profile Dropdown */}
@@ -293,17 +298,53 @@ export default function Header({ activeTab, setActiveTab, onOpenDeposit, onOpenA
                 position: 'absolute',
                 top: '48px',
                 right: 0,
-                width: '160px',
-                backgroundColor: 'rgba(16, 21, 30, 0.95)',
+                width: '180px',
+                backgroundColor: 'rgba(16, 21, 30, 0.98)',
                 border: '1px solid var(--border-color)',
                 borderRadius: '8px',
                 overflow: 'hidden',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
                 zIndex: 20
               }}>
+                {/* VIP Indicator Progress */}
+                <div style={{ padding: '10px 12px', borderBottom: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.01)' }}>
+                  <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: 'bold', textTransform: 'uppercase' }}>VIP Loyalty Club</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '2px' }}>
+                    <Crown size={12} style={{ color: vipInfo?.color }} />
+                    <span style={{ fontSize: '0.78rem', fontWeight: '900', color: vipInfo?.color }}>
+                      {vipInfo?.tier} MEMBER
+                    </span>
+                  </div>
+                </div>
+
                 <div style={{ padding: '8px 12px', borderBottom: '1px solid rgba(255,255,255,0.05)', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
                   {user.email} <br /> {user.mobile}
                 </div>
+
+                {/* Withdraw Link */}
+                <button 
+                  onClick={() => { onOpenDeposit('withdraw'); setShowDropdown(false); }}
+                  style={{
+                    width: '100%',
+                    background: 'none',
+                    border: 'none',
+                    color: '#ffffff',
+                    padding: '10px 12px',
+                    textAlign: 'left',
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    fontWeight: 600,
+                    borderBottom: '1px solid rgba(255,255,255,0.05)'
+                  }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.04)'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                >
+                  <ArrowRightLeft size={13} style={{ color: 'var(--brand-emerald)' }} /> Withdraw Funds
+                </button>
+
                 <button 
                   onClick={handleLogout}
                   style={{
@@ -323,7 +364,7 @@ export default function Header({ activeTab, setActiveTab, onOpenDeposit, onOpenA
                   onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255, 62, 108, 0.05)'}
                   onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                 >
-                  <LogOut size={14} /> Log Out
+                  <LogOut size={13} /> Log Out
                 </button>
               </div>
             )}

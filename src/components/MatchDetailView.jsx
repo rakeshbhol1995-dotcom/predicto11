@@ -158,6 +158,130 @@ export default function MatchDetailView({ match, onBack, oddsFlash }) {
         </div>
       </div>
 
+      {/* 📊 Head-to-Head (H2H) Analytics Dashboard */}
+      <div className="card-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <h3 style={{ fontSize: '1rem', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '8px' }}>
+          <BarChart2 size={16} style={{ color: 'var(--brand-yellow)' }} />
+          Head-to-Head (H2H) Analytics Matrix
+        </h3>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
+          
+          {/* Win Probability donuts */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'bold', textTransform: 'uppercase' }}>Win Probability Projection</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              
+              {/* Circular SVG Donut chart for win probability */}
+              <div style={{ position: 'relative', width: '70px', height: '70px', flexShrink: 0 }}>
+                <svg width="70" height="70" viewBox="0 0 36 36">
+                  {/* Background Circle */}
+                  <circle cx="18" cy="18" r="15.915" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3"/>
+                  
+                  {/* Segment 1: Home Win (58%) */}
+                  <circle cx="18" cy="18" r="15.915" fill="none" stroke="var(--brand-emerald)" strokeWidth="3.5"
+                          strokeDasharray="58 42" strokeDashoffset="25"/>
+                  
+                  {/* Segment 2: Away Win (32%) */}
+                  <circle cx="18" cy="18" r="15.915" fill="none" stroke="var(--brand-yellow)" strokeWidth="3.5"
+                          strokeDasharray="32 68" strokeDashoffset="-33"/>
+                </svg>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                  58%
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--brand-emerald)' }} />
+                  <span>{match.homeTeam} (58%)</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.2)' }} />
+                  <span>Draw / Tie (10%)</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--brand-yellow)' }} />
+                  <span>{match.awayTeam} (32%)</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* Form Streaks (Dots) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'bold', textTransform: 'uppercase' }}>Recent Form Streak (Last 5 Games)</span>
+            
+            {/* Home Streak */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem' }}>
+              <span style={{ color: '#ffffff', fontWeight: 600, minWidth: '70px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }} title={match.homeTeam}>{match.homeTeam}</span>
+              <div style={{ display: 'flex', gap: '4px' }}>
+                {['W', 'W', 'D', 'L', 'W'].map((val, idx) => (
+                  <span key={idx} style={{
+                    width: '18px',
+                    height: '18px',
+                    borderRadius: '50%',
+                    backgroundColor: val === 'W' ? 'rgba(5, 196, 139, 0.15)' : val === 'L' ? 'rgba(255, 62, 108, 0.15)' : 'rgba(255,255,255,0.08)',
+                    color: val === 'W' ? 'var(--brand-emerald)' : val === 'L' ? 'var(--live-red)' : 'var(--text-muted)',
+                    fontSize: '0.62rem',
+                    fontWeight: 'bold',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }} title={val === 'W' ? 'Win' : val === 'L' ? 'Loss' : 'Draw'}>
+                    {val}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Away Streak */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem' }}>
+              <span style={{ color: '#ffffff', fontWeight: 600, minWidth: '70px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }} title={match.awayTeam}>{match.awayTeam}</span>
+              <div style={{ display: 'flex', gap: '4px' }}>
+                {['L', 'W', 'W', 'W', 'L'].map((val, idx) => (
+                  <span key={idx} style={{
+                    width: '18px',
+                    height: '18px',
+                    borderRadius: '50%',
+                    backgroundColor: val === 'W' ? 'rgba(5, 196, 139, 0.15)' : val === 'L' ? 'rgba(255, 62, 108, 0.15)' : 'rgba(255,255,255,0.08)',
+                    color: val === 'W' ? 'var(--brand-emerald)' : val === 'L' ? 'var(--live-red)' : 'var(--text-muted)',
+                    fontSize: '0.62rem',
+                    fontWeight: 'bold',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }} title={val === 'W' ? 'Win' : val === 'L' ? 'Loss' : 'Draw'}>
+                    {val}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Historical Scoreboard */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'bold', textTransform: 'uppercase' }}>Previous Matches Played</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.75rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 6px', background: 'rgba(0,0,0,0.15)', borderRadius: '4px' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Oct 2025:</span>
+                <span style={{ color: '#ffffff', fontWeight: 'bold' }}>{match.homeTeam} 2 - 1 {match.awayTeam}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 6px', background: 'rgba(0,0,0,0.15)', borderRadius: '4px' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Mar 2025:</span>
+                <span style={{ color: '#ffffff', fontWeight: 'bold' }}>{match.homeTeam} 1 - 3 {match.awayTeam}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 6px', background: 'rgba(0,0,0,0.15)', borderRadius: '4px' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Dec 2024:</span>
+                <span style={{ color: '#ffffff', fontWeight: 'bold' }}>{match.homeTeam} 0 - 0 {match.awayTeam}</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
       {/* Expanded Markets Section */}
       {!user && (
         <div style={{

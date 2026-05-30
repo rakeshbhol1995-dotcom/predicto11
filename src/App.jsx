@@ -17,6 +17,80 @@ import { Shield, Home, PlayCircle, ShoppingBag, User, Crown } from 'lucide-react
 
 const ODDS_API_KEY = import.meta.env.VITE_ODDS_API_KEY || "9a2e7922e00027abb0051b99528d6d69";
 
+function WinnersScrollTicker() {
+  const [tickerItems, setTickerItems] = useState([
+    { id: 1, user: 'LuckyStriker', game: 'Aviator', amount: '234 USDT', multiplier: '5.2x' },
+    { id: 2, user: 'MaxWager', game: 'Roulette', amount: '8,400 INR', multiplier: '35x' },
+    { id: 3, user: 'CryptoShark', game: 'Slots', amount: '150 USDT', multiplier: '50x' },
+    { id: 4, user: 'DegenKing', game: 'CSK vs MI', amount: '1,200 INR', multiplier: '1.95x' },
+    { id: 5, user: 'TRX_Whale', game: 'Aviator', amount: '75 USDT', multiplier: '2.5x' }
+  ]);
+
+  useEffect(() => {
+    const games = ['Aviator', 'Slots', 'Roulette', 'CSK vs MI', 'Arsenal vs Chelsea', 'Natus Vincere Match'];
+    const users = ['LuckyFlight', 'BettingBeast', 'CoinKing', 'EthSpinner', 'SlotJackpot', 'WdrMaster', 'DegenGuru', 'VipGold_1'];
+    
+    const interval = setInterval(() => {
+      const randomUser = users[Math.floor(Math.random() * users.length)];
+      const randomGame = games[Math.floor(Math.random() * games.length)];
+      
+      let amountStr = '45 USDT';
+      let multStr = '2x';
+      if (randomGame === 'Aviator') {
+        const mult = (Math.random() * 8 + 1.2).toFixed(2);
+        const usdt = Math.floor(Math.random() * 80 + 5);
+        amountStr = `${usdt} USDT`;
+        multStr = `${mult}x`;
+      } else if (randomGame === 'Slots') {
+        const isJackpot = Math.random() < 0.25;
+        const usdt = isJackpot ? 150 : 15;
+        amountStr = `${usdt} USDT`;
+        multStr = isJackpot ? '50x' : '1.5x';
+      } else if (randomGame === 'Roulette') {
+        const isNum = Math.random() < 0.3;
+        const usdt = isNum ? 350 : 20;
+        amountStr = `${usdt} USDT`;
+        multStr = isNum ? '35x' : '2x';
+      } else {
+        const odds = (Math.random() * 1.5 + 1.4).toFixed(2);
+        const inr = Math.floor(Math.random() * 1500 + 200);
+        amountStr = `${inr} INR`;
+        multStr = `${odds}x`;
+      }
+
+      const newItem = {
+        id: Date.now(),
+        user: randomUser,
+        game: randomGame,
+        amount: amountStr,
+        multiplier: multStr
+      };
+
+      setTickerItems((prev) => [...prev.slice(1), newItem]);
+    }, 6000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const doubleList = [...tickerItems, ...tickerItems];
+
+  return (
+    <div className="winners-ticker-wrap">
+      <div className="winners-ticker-badge">
+        <span className="pulse-dot" />
+        Live Winners Ticker
+      </div>
+      <div className="winners-ticker-track">
+        {doubleList.map((item, idx) => (
+          <div className="ticker-item" key={`${item.id}-${idx}`}>
+            🎉 Player <span className="ticker-item-user">{item.user}</span> won <span className="ticker-item-amount">{item.amount}</span> on <span className="ticker-item-game">{item.game}</span> ({item.multiplier})
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function MainAppContent() {
   const [matches, setMatches] = useState(INITIAL_MATCHES);
   const [selectedSport, setSelectedSport] = useState('All');
@@ -24,6 +98,7 @@ function MainAppContent() {
   const [selectedMatch, setSelectedMatch] = useState(INITIAL_MATCHES[0]); // Default to first match
   const [oddsFlash, setOddsFlash] = useState({});
   const [isDepositOpen, setIsDepositOpen] = useState(false);
+  const [depositModalTab, setDepositModalTab] = useState('deposit');
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isLiveApi, setIsLiveApi] = useState(false);
   const [apiStatus, setApiStatus] = useState('Disconnected');
@@ -447,7 +522,7 @@ function MainAppContent() {
       <Header 
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 
-        onOpenDeposit={() => setIsDepositOpen(true)} 
+        onOpenDeposit={(tabType = 'deposit') => { setDepositModalTab(tabType); setIsDepositOpen(true); }} 
         onOpenAuth={() => setIsAuthOpen(true)}
         currentView={currentView}
         setCurrentView={setCurrentView}
@@ -455,11 +530,19 @@ function MainAppContent() {
         isLiveApi={isLiveApi}
       />
 
+      {/* Global Winners Scroll Ticker */}
+      <WinnersScrollTicker />
+
       {/* Main Grid Layout */}
       <div className="main-layout">
-        {/* Left: Sidebar (only visible on dashboard or details, and not in casino) */}
-        {currentView !== 'admin' && activeTab !== 'Casino' && (
-          <Sidebar selectedSport={selectedSport} setSelectedSport={setSelectedSport} matches={matches} />
+        {/* Left: Sidebar (visible on dashboard, details, and casino) */}
+        {currentView !== 'admin' && (
+          <Sidebar 
+            selectedSport={selectedSport} 
+            setSelectedSport={setSelectedSport} 
+            matches={matches} 
+            activeTab={activeTab}
+          />
         )}
 
         {/* Center: Main View Controller */}
@@ -469,7 +552,7 @@ function MainAppContent() {
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          gridColumn: (currentView === 'admin' || activeTab === 'Casino') ? '1 / span 3' : undefined
+          gridColumn: (currentView === 'admin') ? '1 / span 3' : (activeTab === 'Casino') ? '2 / span 2' : undefined
         }}>
           {currentView === 'admin' ? (
             <AdminPanel matches={matches} onUpdateMatches={setMatches} />
@@ -598,6 +681,7 @@ function MainAppContent() {
       <DepositModal 
         isOpen={isDepositOpen} 
         onClose={() => setIsDepositOpen(false)} 
+        defaultTabType={depositModalTab}
       />
 
       {/* LogIn/Register Auth Modal */}

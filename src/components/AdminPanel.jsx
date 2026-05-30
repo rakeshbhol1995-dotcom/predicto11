@@ -17,10 +17,12 @@ export default function AdminPanel({ matches, onUpdateMatches }) {
   const { 
     usersList, placedBets, fiatSymbol, convertUsdtToFiat, 
     depositRequests, approveDepositRequest, rejectDepositRequest,
-    cryptoBalances, updateUserBalances, user
+    cryptoBalances, updateUserBalances, user,
+    totalWageredVolumeUsdt, vipInfo,
+    withdrawalRequests, approveWithdrawalRequest, rejectWithdrawalRequest
   } = useBet();
   
-  const [activeSubTab, setActiveSubTab] = useState('matches'); // 'matches' | 'users' | 'bets' | 'deposits'
+  const [activeSubTab, setActiveSubTab] = useState('matches'); // 'matches' | 'users' | 'bets' | 'deposits' | 'withdrawals'
 
   // Live match editor states
   const [editingId, setEditingId] = useState(null);
@@ -299,7 +301,8 @@ export default function AdminPanel({ matches, onUpdateMatches }) {
           { key: 'matches', label: 'Match Event Control', icon: Play },
           { key: 'users', label: 'Registered Players & Wallet', icon: Users },
           { key: 'bets', label: 'Bets Audit Ledger', icon: FileText },
-          { key: 'deposits', label: 'P2P Payments Manager', icon: Landmark }
+          { key: 'deposits', label: 'P2P Payments Manager', icon: Landmark },
+          { key: 'withdrawals', label: 'Withdrawal Approvals Ledger', icon: Wallet }
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeSubTab === tab.key;
@@ -670,29 +673,38 @@ export default function AdminPanel({ matches, onUpdateMatches }) {
                     <th style={{ padding: '12px' }}>User ID / Username</th>
                     <th style={{ padding: '12px' }}>Email Address</th>
                     <th style={{ padding: '12px' }}>Mobile Number</th>
+                    <th style={{ padding: '12px' }}>Total Wagered</th>
+                    <th style={{ padding: '12px' }}>VIP Membership</th>
                     <th style={{ padding: '12px', textAlign: 'right' }}>Security Privilege</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {usersList.map((u, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                      <td style={{ padding: '12px', color: 'var(--brand-yellow)', fontWeight: 'bold' }}>{u.username}</td>
-                      <td style={{ padding: '12px', color: '#ffffff' }}>{u.email}</td>
-                      <td style={{ padding: '12px', color: 'rgba(255,255,255,0.6)', fontFamily: 'monospace' }}>{u.mobile}</td>
-                      <td style={{ padding: '12px', textAlign: 'right' }}>
-                        <span style={{ 
-                          fontSize: '0.65rem', 
-                          backgroundColor: u.isAdmin ? 'rgba(168, 85, 247, 0.15)' : 'rgba(16, 185, 129, 0.15)',
-                          color: u.isAdmin ? '#c084fc' : 'var(--brand-emerald)',
-                          padding: '3px 8px',
-                          borderRadius: '4px',
-                          fontWeight: 'bold'
-                        }}>
-                          {u.isAdmin ? 'PLATFORM ADMIN' : 'BETTING PLAYER'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                  {usersList.map((u, i) => {
+                    const volume = u.username.toLowerCase() === user?.username?.toLowerCase() ? totalWageredVolumeUsdt : (u.isAdmin ? 0 : 50.00);
+                    const tierName = u.username.toLowerCase() === user?.username?.toLowerCase() ? vipInfo?.tier : (u.isAdmin ? 'PLATINUM' : 'BRONZE');
+                    const tierColor = u.username.toLowerCase() === user?.username?.toLowerCase() ? vipInfo?.color : (u.isAdmin ? '#c084fc' : '#cd7f32');
+                    return (
+                      <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                        <td style={{ padding: '12px', color: 'var(--brand-yellow)', fontWeight: 'bold' }}>{u.username}</td>
+                        <td style={{ padding: '12px', color: '#ffffff' }}>{u.email}</td>
+                        <td style={{ padding: '12px', color: 'rgba(255,255,255,0.6)', fontFamily: 'monospace' }}>{u.mobile}</td>
+                        <td style={{ padding: '12px', color: 'var(--brand-emerald)', fontWeight: 'bold' }}>${volume.toFixed(2)}</td>
+                        <td style={{ padding: '12px', color: tierColor, fontWeight: 'bold', fontSize: '0.78rem' }}>👑 {tierName}</td>
+                        <td style={{ padding: '12px', textAlign: 'right' }}>
+                          <span style={{ 
+                            fontSize: '0.65rem', 
+                            backgroundColor: u.isAdmin ? 'rgba(168, 85, 247, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                            color: u.isAdmin ? '#c084fc' : 'var(--brand-emerald)',
+                            padding: '3px 8px',
+                            borderRadius: '4px',
+                            fontWeight: 'bold'
+                          }}>
+                            {u.isAdmin ? 'PLATFORM ADMIN' : 'BETTING PLAYER'}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -887,6 +899,128 @@ export default function AdminPanel({ matches, onUpdateMatches }) {
                             >
                               <XCircle size={12} />
                               Reject
+                            </button>
+                          </div>
+                        ) : (
+                          <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.72rem' }}>Settled</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 5: P2P Withdrawals Manager */}
+      {activeSubTab === 'withdrawals' && (
+        <div style={{
+          background: 'rgba(30, 20, 50, 0.25)',
+          border: '1px solid rgba(255,255,255,0.05)',
+          borderRadius: '12px',
+          padding: '20px'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+            <h3 style={{ fontSize: '1rem', color: '#ffffff', fontWeight: 'bold' }}>P2P Withdrawal Approvals Console</h3>
+            <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)' }}>Verify withdrawal address requests and release tokens.</span>
+          </div>
+
+          {withdrawalRequests.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(255,255,255,0.3)' }}>
+              No withdrawal request slips found in database.
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.45)' }}>
+                    <th style={{ padding: '12px' }}>Withdrawal ID</th>
+                    <th style={{ padding: '12px' }}>Player ID</th>
+                    <th style={{ padding: '12px' }}>Network / Method</th>
+                    <th style={{ padding: '12px' }}>Payout Address</th>
+                    <th style={{ padding: '12px' }}>USDT Value</th>
+                    <th style={{ padding: '12px' }}>Submitted Time</th>
+                    <th style={{ padding: '12px' }}>Audit Status</th>
+                    <th style={{ padding: '12px', textAlign: 'center' }}>Approval Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {withdrawalRequests.map((req) => (
+                    <tr key={req.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                      <td style={{ padding: '12px', fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', fontFamily: 'monospace' }}>{req.id}</td>
+                      <td style={{ padding: '12px', fontWeight: 'bold', color: '#ffffff' }}>{req.username}</td>
+                      <td style={{ padding: '12px', color: 'rgba(255,255,255,0.7)' }}>{req.method}</td>
+                      <td style={{ 
+                        padding: '12px', 
+                        fontFamily: 'monospace', 
+                        fontSize: '0.72rem', 
+                        color: 'var(--brand-emerald)', 
+                        maxWidth: '200px', 
+                        overflow: 'hidden', 
+                        textOverflow: 'ellipsis', 
+                        whiteSpace: 'nowrap' 
+                      }} title={req.address}>
+                        {req.address}
+                      </td>
+                      <td style={{ padding: '12px', color: 'var(--brand-yellow)', fontWeight: 'bold' }}>
+                        ${req.amount.toFixed(2)}
+                      </td>
+                      <td style={{ padding: '12px', color: 'rgba(255,255,255,0.4)' }}>{req.date}</td>
+                      <td style={{ padding: '12px' }}>
+                        <span style={{ 
+                          fontSize: '0.65rem', 
+                          backgroundColor: req.status === 'approved' ? 'rgba(16, 185, 129, 0.15)' : req.status === 'rejected' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                          color: req.status === 'approved' ? 'var(--brand-emerald)' : req.status === 'rejected' ? '#ef4444' : '#f59e0b',
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          fontWeight: 'bold'
+                        }}>
+                          {req.status.toUpperCase()}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px', textAlign: 'center' }}>
+                        {req.status === 'pending' ? (
+                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                            <button
+                              onClick={() => approveWithdrawalRequest(req.id)}
+                              style={{
+                                backgroundColor: 'var(--brand-emerald)',
+                                border: 'none',
+                                color: '#080a0f',
+                                padding: '5px 12px',
+                                borderRadius: '4px',
+                                fontWeight: 'bold',
+                                cursor: 'pointer',
+                                fontSize: '0.72rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                boxShadow: '0 2px 6px rgba(16, 185, 129, 0.2)'
+                              }}
+                            >
+                              <CheckCircle size={12} />
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => rejectWithdrawalRequest(req.id)}
+                              style={{
+                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                border: '1px solid #ef4444',
+                                color: '#ef4444',
+                                padding: '4px 10px',
+                                borderRadius: '4px',
+                                fontWeight: 'bold',
+                                cursor: 'pointer',
+                                fontSize: '0.72rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                              }}
+                            >
+                              <XCircle size={12} />
+                              Reject (Refund)
                             </button>
                           </div>
                         ) : (

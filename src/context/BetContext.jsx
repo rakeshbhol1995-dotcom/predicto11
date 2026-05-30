@@ -42,6 +42,130 @@ export const BetProvider = ({ children }) => {
   const [selections, setSelections] = useState([]);
   const [placedBets, setPlacedBets] = useState([]); // Internal values stored in USDT
 
+  // --- NEW UPGRADED STATE & HANDLERS ---
+  const [totalWageredVolumeUsdt, setTotalWageredVolumeUsdt] = useState(180.00);
+  const [lastSpinTimestamp, setLastSpinTimestamp] = useState(null);
+  
+  // Withdrawal request ledger
+  const [withdrawalRequests, setWithdrawalRequests] = useState([
+    {
+      id: 'wdr-101',
+      username: 'Bunty',
+      method: 'Crypto (USDT - TRC20)',
+      address: 'TY3B19fMhWnD6b3Xz8Kq10098fS2c90',
+      amount: 45.00, // stored in USDT
+      status: 'pending',
+      date: '2026-05-28 02:40 PM'
+    }
+  ]);
+
+  // VIP Tier Information Helper
+  const getVipTierInfo = (wageredVolume) => {
+    if (wageredVolume >= 20000) return { tier: 'DIAMOND', color: '#00e5ff', next: null, required: 20000 };
+    if (wageredVolume >= 5000) return { tier: 'PLATINUM', color: '#c084fc', next: 'DIAMOND', required: 20000 };
+    if (wageredVolume >= 1000) return { tier: 'GOLD', color: 'var(--brand-gold)', next: 'PLATINUM', required: 5000 };
+    if (wageredVolume >= 200) return { tier: 'SILVER', color: '#a0a0a0', next: 'GOLD', required: 1000 };
+    return { tier: 'BRONZE', color: '#cd7f32', next: 'SILVER', required: 200 };
+  };
+
+  const vipInfo = getVipTierInfo(totalWageredVolumeUsdt);
+  const currentMin = vipInfo.tier === 'BRONZE' ? 0 : vipInfo.tier === 'SILVER' ? 200 : vipInfo.tier === 'GOLD' ? 1000 : vipInfo.tier === 'PLATINUM' ? 5000 : 20000;
+  const nextTarget = vipInfo.required;
+  const vipProgress = vipInfo.next 
+    ? Math.min(100, Math.max(0, ((totalWageredVolumeUsdt - currentMin) / (nextTarget - currentMin)) * 100))
+    : 100;
+
+  // Add wager volume helper (credits sports or casino wagers)
+  const addWagerVolume = (usdtAmount) => {
+    const amt = parseFloat(usdtAmount);
+    if (!isNaN(amt) && amt > 0) {
+      setTotalWageredVolumeUsdt(prev => parseFloat((prev + amt).toFixed(4)));
+    }
+  };
+
+  // Daily Spin Wheel Reward Handler
+  const spinDailyWheel = (mockBypass = false) => {
+    const now = Date.now();
+    const COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 hours
+    if (!mockBypass && lastSpinTimestamp && (now - lastSpinTimestamp < COOLDOWN_MS)) {
+      const remaining = COOLDOWN_MS - (now - lastSpinTimestamp);
+      const hrs = Math.floor(remaining / (3600 * 1000));
+      const mins = Math.floor((remaining % (3600 * 1000)) / (60 * 1000));
+      return { success: false, message: `Reward locked. Cooldown remaining: ${hrs}h ${mins}m.` };
+    }
+    
+    // Select prize randomly
+    const roll = Math.random();
+    let prize = 5;
+    if (roll < 0.08) prize = 50; // 8% chance for $50 USDT
+    else if (roll < 0.22) prize = 20; // 14% chance for $20 USDT
+    else if (roll < 0.45) prize = 15; // 23% chance for $15 USDT
+    else if (roll < 0.75) prize = 10; // 30% chance for $10 USDT
+    else if (roll < 0.95) prize = 5; // 20% chance for $5 USDT
+    else prize = 0; // 5% chance for $0 (empty sector)
+    
+    if (prize > 0) {
+      setCryptoBalances(prev => ({
+        ...prev,
+        usdt: parseFloat((prev.usdt + prize).toFixed(4))
+      }));
+    }
+    setLastSpinTimestamp(now);
+    return { success: true, prize, message: prize > 0 ? `Congratulations! You won $${prize} USDT!` : "Better luck next spin!" };
+  };
+
+  // Submit dynamic withdrawal request
+  const submitWithdrawalRequest = (method, address, amountVal) => {
+    if (!user) return { success: false, message: "Please log in to withdraw." };
+    const amt = parseFloat(amountVal);
+    if (isNaN(amt) || amt <= 0) return { success: false, message: "Please enter a valid amount." };
+    
+    if (amt > cryptoBalances.usdt) {
+      return { success: false, message: "Insufficient USDT balance in your wallet." };
+    }
+    
+    // Deduct Immediately (locks balance as pending)
+    setCryptoBalances(prev => ({
+      ...prev,
+      usdt: parseFloat((prev.usdt - amt).toFixed(4))
+    }));
+    
+    const newReq = {
+      id: `wdr-${Date.now()}`,
+      username: user.username,
+      method,
+      address,
+      amount: amt,
+      status: 'pending',
+      date: new Date().toLocaleString()
+    };
+    
+    setWithdrawalRequests(prev => [newReq, ...prev]);
+    return { success: true, message: "Withdrawal request submitted! Payout will release after agent verification." };
+  };
+
+  // Admin approves withdrawal request
+  const approveWithdrawalRequest = (reqId) => {
+    setWithdrawalRequests(prev => prev.map(r => r.id === reqId ? { ...r, status: 'approved' } : r));
+    return true;
+  };
+
+  // Admin rejects withdrawal request (refunds USDT immediately)
+  const rejectWithdrawalRequest = (reqId) => {
+    const req = withdrawalRequests.find(r => r.id === reqId);
+    if (!req || req.status !== 'pending') return false;
+    
+    // Refund
+    setCryptoBalances(prev => ({
+      ...prev,
+      usdt: parseFloat((prev.usdt + req.amount).toFixed(4))
+    }));
+    
+    setWithdrawalRequests(prev => prev.map(r => r.id === reqId ? { ...r, status: 'rejected' } : r));
+    return true;
+  };
+
+
   // Calculate total fiat balance based on current exchange rates
   const totalBalanceFiat = 
     (cryptoBalances.usdt * EXCHANGE_RATES.USDT[selectedFiat]) +
@@ -273,6 +397,7 @@ export const BetProvider = ({ children }) => {
 
       setPlacedBets((prev) => [newBet, ...prev]);
       setSelections([]);
+      addWagerVolume(usdtStakeNum); // INCREASES VIP WAGER VOLUME
       return { success: true, message: "Accumulator bet placed successfully!" };
     } else {
       // Single Bets
@@ -315,6 +440,7 @@ export const BetProvider = ({ children }) => {
 
       setPlacedBets((prev) => [...newBets, ...prev]);
       setSelections([]);
+      addWagerVolume(totalRequiredUsdt); // INCREASES VIP WAGER VOLUME
       return { success: true, message: "All single bets placed successfully!" };
     }
   };
@@ -373,7 +499,17 @@ export const BetProvider = ({ children }) => {
         submitDepositRequest,
         approveDepositRequest,
         rejectDepositRequest,
-        updateUserBalances
+        updateUserBalances,
+        totalWageredVolumeUsdt,
+        vipInfo,
+        vipProgress,
+        addWagerVolume,
+        lastSpinTimestamp,
+        spinDailyWheel,
+        withdrawalRequests,
+        submitWithdrawalRequest,
+        approveWithdrawalRequest,
+        rejectWithdrawalRequest
       }}
     >
       {children}
