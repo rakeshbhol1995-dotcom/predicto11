@@ -608,7 +608,7 @@ function MainAppContent() {
               onSelectMatch={handleSelectMatch}
               selectedMatch={selectedMatch}
               onOddsAdded={() => {
-                if (window.innerWidth <= 768) {
+                if (window.innerWidth <= 1024) {
                   setCurrentView('mobile-slip');
                 }
               }}

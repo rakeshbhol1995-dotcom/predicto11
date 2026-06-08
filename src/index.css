@@ -317,21 +317,15 @@ h1, h2, h3, h4, h5 {
 }
 
 /* ===== RESPONSIVE BREAKPOINTS ===== */
-@media (max-width: 1280px) {
-  .main-layout {
-    grid-template-columns: 220px 1fr;
-  }
-  .right-sidebar {
-    display: none !important;
-  }
-}
-
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .main-layout {
     grid-template-columns: 1fr;
     height: calc(100% - 112px);
   }
   .left-sidebar {
+    display: none !important;
+  }
+  .right-sidebar {
     display: none !important;
   }
   .dashboard-main {
@@ -604,7 +598,7 @@ h1, h2, h3, h4, h5 {
   align-items: flex-end;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .chat-widget-container {
     bottom: 80px;
     right: 16px;
@@ -710,7 +704,7 @@ h1, h2, h3, h4, h5 {
   box-shadow: 0 -4px 16px rgba(0,0,0,0.4);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .mobile-bottom-nav {
     display: flex;
   }
@@ -808,7 +802,7 @@ h1, h2, h3, h4, h5 {
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .header-nav {
     display: none !important;
   }
@@ -1322,7 +1316,7 @@ h1, h2, h3, h4, h5 {
   overscroll-behavior-y: contain;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .casino-lobby-container {
     padding: 12px !important;
     padding-bottom: 160px !important; /* Safe zone above bottom navbar */
