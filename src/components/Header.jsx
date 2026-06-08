@@ -3,11 +3,16 @@ import { useBet } from '../context/BetContext';
 import { Search, User, Wallet, Plus, Bell, Shield, LogOut, ArrowRightLeft, Crown } from 'lucide-react';
 
 const BrandLogo = () => (
-  <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ filter: 'drop-shadow(0 0 8px rgba(5, 196, 139, 0.5))' }}>
-    <polygon points="16,2 30,9 30,23 16,30 2,23 2,9" stroke="var(--brand-emerald)" strokeWidth="2.5" fill="rgba(5, 196, 139, 0.1)"/>
-    <path d="M11 9H16C18.5 9 20 10.5 20 12.5C20 14.5 18.5 16 16 16H11V23" stroke="var(--brand-yellow)" strokeWidth="2.5" strokeLinecap="round"/>
-    <line x1="21" y1="9" x2="21" y2="23" stroke="var(--brand-emerald)" strokeWidth="2.5" strokeLinecap="round"/>
-  </svg>
+  <img 
+    src="/logo.png" 
+    alt="Predicto11 Logo" 
+    style={{ 
+      width: '28px', 
+      height: '28px', 
+      objectFit: 'contain',
+      filter: 'drop-shadow(0 0 8px rgba(5, 196, 139, 0.5))'
+    }} 
+  />
 );
 
 export default function Header({ activeTab, setActiveTab, onOpenDeposit, onOpenAuth, currentView, setCurrentView, apiStatus, isLiveApi }) {
