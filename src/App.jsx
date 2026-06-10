@@ -9,7 +9,6 @@ import DepositModal from './components/DepositModal';
 import AuthModal from './components/AuthModal';
 import MatchDetailView from './components/MatchDetailView';
 import AdminPanel from './components/AdminPanel';
-import CasinoLobby from './components/CasinoLobby';
 import LiveChat from './components/LiveChat';
 import Preloader from './components/Preloader';
 import { INITIAL_MATCHES } from './data/mockData';
@@ -552,12 +551,10 @@ function MainAppContent() {
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          gridColumn: (currentView === 'admin') ? '1 / span 3' : (activeTab === 'Casino') ? '2 / span 2' : undefined
+          gridColumn: (currentView === 'admin') ? '1 / span 3' : undefined
         }}>
           {currentView === 'admin' ? (
             <AdminPanel matches={matches} onUpdateMatches={setMatches} />
-          ) : activeTab === 'Casino' ? (
-            <CasinoLobby />
           ) : currentView === 'match-detail' ? (
             <MatchDetailView 
               match={selectedMatch} 
@@ -616,8 +613,8 @@ function MainAppContent() {
           )}
         </main>
 
-        {/* Right Sidebar: Match Tracker and Bet Slip (hidden in admin & casino) */}
-        {currentView !== 'admin' && activeTab !== 'Casino' && (
+        {/* Right Sidebar: Match Tracker and Bet Slip (hidden in admin) */}
+        {currentView !== 'admin' && (
           <div className="right-sidebar">
             {/* Top: Match Tracker (only if not viewing mobile drawers) */}
             {currentView !== 'mobile-slip' && currentView !== 'mobile-mybets' && (
@@ -647,12 +644,6 @@ function MainAppContent() {
           style={{ background: 'none', border: 'none', color: currentView === 'dashboard' && activeTab === 'In-Play' ? 'var(--brand-yellow)' : 'var(--text-muted)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', fontSize: '0.65rem' }}
         >
           <PlayCircle size={18} /> In-Play
-        </button>
-        <button 
-          onClick={() => { setCurrentView('dashboard'); setActiveTab('Casino'); }} 
-          style={{ background: 'none', border: 'none', color: currentView === 'dashboard' && activeTab === 'Casino' ? 'var(--brand-purple)' : 'var(--text-muted)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', fontSize: '0.65rem' }}
-        >
-          <Crown size={18} /> Casino
         </button>
         <button 
           onClick={() => setCurrentView('mobile-slip')} 

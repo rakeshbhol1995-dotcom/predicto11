@@ -97,7 +97,7 @@ export default function Header({ activeTab, setActiveTab, onOpenDeposit, onOpenA
 
         {currentView !== 'admin' && (
           <nav className="header-nav">
-            {['Sports', 'In-Play', 'Casino'].map((tab) => {
+            {['Sports', 'In-Play'].map((tab) => {
               const isActive = activeTab === tab;
               return (
                 <button
