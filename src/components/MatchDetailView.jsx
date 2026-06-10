@@ -7,9 +7,9 @@ export default function MatchDetailView({ match, onBack, oddsFlash }) {
 
   const { toggleSelection, selections, user } = useBet();
 
-  const isSelected = (outcomeName, marketName = "Match Winner") => {
+  const isSelected = (outcomeName, betType = 'back', marketName = "Match Winner") => {
     return selections.some(
-      (sel) => sel.matchId === match.id && sel.outcomeName === outcomeName && sel.market === marketName
+      (sel) => sel.matchId === match.id && sel.outcomeName === outcomeName && sel.market === marketName && sel.betType === betType
     );
   };
 
@@ -305,40 +305,93 @@ export default function MatchDetailView({ match, onBack, oddsFlash }) {
 
         {/* Market 1: Match Winner */}
         <div className="card-panel" style={{ padding: '14px' }}>
-          <h4 style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '10px' }}>Full Time Match Winner (1X2)</h4>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
-            <div 
-              className={`odds-cell ${isSelected(match.homeTeam) ? 'selected' : ''} ${getFlashClass('home')}`}
-              onClick={() => toggleSelection(match, match.homeTeam, match.odds.home)}
-              style={{ opacity: user ? 1 : 0.6, cursor: user ? 'pointer' : 'not-allowed' }}
-            >
-              <span className="odds-lbl">1 (Home Win)</span>
-              <span className="odds-val">{match.odds.home?.toFixed(2) || 'LOCKED'}</span>
+          <h4 style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '14px' }}>Full Time Match Winner (1X2)</h4>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {/* Home Outcome Row */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 10px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fff' }}>{match.homeTeam} (1)</span>
+              <div style={{ display: 'flex', gap: '6px', width: '160px' }}>
+                <button 
+                  className={`odds-btn odds-btn-back ${isSelected(match.homeTeam, 'back') ? 'odds-btn-selected' : ''} ${getFlashClass('home')}`}
+                  onClick={() => user && toggleSelection(match, match.homeTeam, match.odds.home, 'back')}
+                  disabled={!user || !match.odds.home}
+                  style={{ height: '36px', borderRadius: '4px', opacity: user ? 1 : 0.6, cursor: user ? 'pointer' : 'not-allowed' }}
+                >
+                  <span className="odds-label" style={{ fontSize: '0.55rem', color: '#80d8ff' }}>Back</span>
+                  <span className="odds-value" style={{ fontSize: '0.78rem' }}>{match.odds.home?.toFixed(2) || 'LOCKED'}</span>
+                </button>
+                <button 
+                  className={`odds-btn odds-btn-lay ${isSelected(match.homeTeam, 'lay') ? 'odds-btn-selected' : ''} ${getFlashClass('home')}`}
+                  onClick={() => {
+                    const layOdds = match.odds.home ? parseFloat((match.odds.home + 0.05).toFixed(2)) : null;
+                    user && toggleSelection(match, match.homeTeam, layOdds, 'lay');
+                  }}
+                  disabled={!user || !match.odds.home}
+                  style={{ height: '36px', borderRadius: '4px', opacity: user ? 1 : 0.6, cursor: user ? 'pointer' : 'not-allowed' }}
+                >
+                  <span className="odds-label" style={{ fontSize: '0.55rem', color: '#ff80ab' }}>Lay</span>
+                  <span className="odds-value" style={{ fontSize: '0.78rem' }}>{match.odds.home ? (match.odds.home + 0.05).toFixed(2) : 'LOCKED'}</span>
+                </button>
+              </div>
             </div>
 
-            {match.odds.draw !== null ? (
-              <div 
-                className={`odds-cell ${isSelected('Draw') ? 'selected' : ''} ${getFlashClass('draw')}`}
-                onClick={() => toggleSelection(match, 'Draw', match.odds.draw)}
-                style={{ opacity: user ? 1 : 0.6, cursor: user ? 'pointer' : 'not-allowed' }}
-              >
-                <span className="odds-lbl">X (Draw)</span>
-                <span className="odds-val">{match.odds.draw?.toFixed(2)}</span>
-              </div>
-            ) : (
-              <div className="odds-cell" style={{ opacity: 0.5, cursor: 'not-allowed' }}>
-                <span className="odds-lbl">X (Draw)</span>
-                <span className="odds-val">—</span>
+            {/* Draw Outcome Row */}
+            {match.odds.draw !== null && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 10px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fff' }}>Draw (X)</span>
+                <div style={{ display: 'flex', gap: '6px', width: '160px' }}>
+                  <button 
+                    className={`odds-btn odds-btn-back ${isSelected('Draw', 'back') ? 'odds-btn-selected' : ''} ${getFlashClass('draw')}`}
+                    onClick={() => user && toggleSelection(match, 'Draw', match.odds.draw, 'back')}
+                    disabled={!user}
+                    style={{ height: '36px', borderRadius: '4px', opacity: user ? 1 : 0.6, cursor: user ? 'pointer' : 'not-allowed' }}
+                  >
+                    <span className="odds-label" style={{ fontSize: '0.55rem', color: '#80d8ff' }}>Back</span>
+                    <span className="odds-value" style={{ fontSize: '0.78rem' }}>{match.odds.draw.toFixed(2)}</span>
+                  </button>
+                  <button 
+                    className={`odds-btn odds-btn-lay ${isSelected('Draw', 'lay') ? 'odds-btn-selected' : ''} ${getFlashClass('draw')}`}
+                    onClick={() => {
+                      const layOdds = parseFloat((match.odds.draw + 0.10).toFixed(2));
+                      user && toggleSelection(match, 'Draw', layOdds, 'lay');
+                    }}
+                    disabled={!user}
+                    style={{ height: '36px', borderRadius: '4px', opacity: user ? 1 : 0.6, cursor: user ? 'pointer' : 'not-allowed' }}
+                  >
+                    <span className="odds-label" style={{ fontSize: '0.55rem', color: '#ff80ab' }}>Lay</span>
+                    <span className="odds-value" style={{ fontSize: '0.78rem' }}>{(match.odds.draw + 0.10).toFixed(2)}</span>
+                  </button>
+                </div>
               </div>
             )}
 
-            <div 
-              className={`odds-cell ${isSelected(match.awayTeam) ? 'selected' : ''} ${getFlashClass('away')}`}
-              onClick={() => toggleSelection(match, match.awayTeam, match.odds.away)}
-              style={{ opacity: user ? 1 : 0.6, cursor: user ? 'pointer' : 'not-allowed' }}
-            >
-              <span className="odds-lbl">2 (Away Win)</span>
-              <span className="odds-val">{match.odds.away?.toFixed(2) || 'LOCKED'}</span>
+            {/* Away Outcome Row */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 10px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fff' }}>{match.awayTeam} (2)</span>
+              <div style={{ display: 'flex', gap: '6px', width: '160px' }}>
+                <button 
+                  className={`odds-btn odds-btn-back ${isSelected(match.awayTeam, 'back') ? 'odds-btn-selected' : ''} ${getFlashClass('away')}`}
+                  onClick={() => user && toggleSelection(match, match.awayTeam, match.odds.away, 'back')}
+                  disabled={!user || !match.odds.away}
+                  style={{ height: '36px', borderRadius: '4px', opacity: user ? 1 : 0.6, cursor: user ? 'pointer' : 'not-allowed' }}
+                >
+                  <span className="odds-label" style={{ fontSize: '0.55rem', color: '#80d8ff' }}>Back</span>
+                  <span className="odds-value" style={{ fontSize: '0.78rem' }}>{match.odds.away?.toFixed(2) || 'LOCKED'}</span>
+                </button>
+                <button 
+                  className={`odds-btn odds-btn-lay ${isSelected(match.awayTeam, 'lay') ? 'odds-btn-selected' : ''} ${getFlashClass('away')}`}
+                  onClick={() => {
+                    const layOdds = match.odds.away ? parseFloat((match.odds.away + 0.05).toFixed(2)) : null;
+                    user && toggleSelection(match, match.awayTeam, layOdds, 'lay');
+                  }}
+                  disabled={!user || !match.odds.away}
+                  style={{ height: '36px', borderRadius: '4px', opacity: user ? 1 : 0.6, cursor: user ? 'pointer' : 'not-allowed' }}
+                >
+                  <span className="odds-label" style={{ fontSize: '0.55rem', color: '#ff80ab' }}>Lay</span>
+                  <span className="odds-value" style={{ fontSize: '0.78rem' }}>{match.odds.away ? (match.odds.away + 0.05).toFixed(2) : 'LOCKED'}</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

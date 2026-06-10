@@ -250,27 +250,33 @@ export const BetProvider = ({ children }) => {
   };
 
   // Add or Toggle a selection in the betslip
-  const toggleSelection = (match, outcomeName, oddValue, marketName = "Match Winner") => {
+  const toggleSelection = (match, outcomeName, oddValue, betType = 'back', marketName = "Match Winner") => {
     if (oddValue === null) return;
 
     const existingIndex = selections.findIndex(
-      (sel) => sel.matchId === match.id && sel.outcomeName === outcomeName
+      (sel) => sel.matchId === match.id && sel.outcomeName === outcomeName && sel.betType === betType
     );
 
     if (existingIndex > -1) {
       setSelections(selections.filter((_, i) => i !== existingIndex));
     } else {
+      // Clean selections for this match/outcome of different bet types to prevent duplicate back/lay on same outcome
+      const cleanSelections = selections.filter(
+        (sel) => !(sel.matchId === match.id && sel.outcomeName === outcomeName)
+      );
+
       const newSelection = {
-        id: `${match.id}-${outcomeName.replace(/\s+/g, '-').toLowerCase()}`,
+        id: `${match.id}-${outcomeName.replace(/\s+/g, '-').toLowerCase()}-${betType}`,
         matchId: match.id,
         matchName: `${match.homeTeam} v ${match.awayTeam}`,
         sport: match.sport,
         market: marketName,
         outcomeName: outcomeName,
         odd: oddValue,
+        betType: betType, // 'back' or 'lay'
         stake: "" 
       };
-      setSelections([...selections, newSelection]);
+      setSelections([...cleanSelections, newSelection]);
     }
   };
 
@@ -405,7 +411,7 @@ export const BetProvider = ({ children }) => {
       addWagerVolume(usdtStakeNum); // INCREASES VIP WAGER VOLUME
       return { success: true, message: "Accumulator bet placed successfully!" };
     } else {
-      // Single Bets
+      // Single Bets (Back / Lay)
       let totalRequiredUsdt = 0;
       const validSelections = [];
 
@@ -415,23 +421,31 @@ export const BetProvider = ({ children }) => {
           return { success: false, message: `Please enter a valid stake for: ${sel.matchName}` };
         }
         const usdtStakeNum = convertFiatToUsdt(fiatStakeNum);
-        totalRequiredUsdt += usdtStakeNum;
-        validSelections.push({ ...sel, usdtStakeNum });
+        
+        // Cost is Stake for Back, and Liability for Lay
+        let costUsdt = usdtStakeNum;
+        if (sel.betType === 'lay') {
+          costUsdt = usdtStakeNum * (sel.odd - 1);
+        }
+
+        totalRequiredUsdt += costUsdt;
+        validSelections.push({ ...sel, usdtStakeNum, costUsdt });
       }
 
       if (totalRequiredUsdt > cryptoBalances.usdt) {
-        return { success: false, message: "Insufficient balance." };
+        return { success: false, message: "Insufficient balance to cover total stake / liability." };
       }
 
       const newBets = validSelections.map((sel) => {
-        const usdtPayout = sel.usdtStakeNum * sel.odd;
+        const usdtPayout = sel.usdtStakeNum * sel.odd; // In exchange, winning a Lay bet pays: Stake (profit) + Liability (refunded) = Stake * Odd
         return {
           id: `bet-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
           type: "Single",
+          betType: sel.betType || "back",
           selections: [sel],
-          totalStakeUsdt: sel.usdtStakeNum,
+          totalStakeUsdt: sel.costUsdt, // This is the actual amount deducted from balance
           potentialPayoutUsdt: parseFloat(usdtPayout.toFixed(4)),
-          cashOutValueUsdt: parseFloat((sel.usdtStakeNum * 0.95).toFixed(4)),
+          cashOutValueUsdt: parseFloat((sel.costUsdt * 0.95).toFixed(4)),
           status: "active",
           date: new Date().toLocaleTimeString(),
           username: user.username

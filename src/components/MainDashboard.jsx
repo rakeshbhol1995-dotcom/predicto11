@@ -17,23 +17,23 @@ export default function MainDashboard({ matches, selectedSport, setSelectedSport
   const [toast, setToast] = useState(null); // { type: 'added'|'removed', team, odd }
 
   // Handle odds click with toast + mobile navigation
-  const handleOddsClick = (match, outcomeName, oddValue) => {
+  const handleOddsClick = (match, outcomeName, oddValue, betType = 'back') => {
     if (oddValue === null) return;
     const alreadySelected = selections.some(
-      s => s.matchId === match.id && s.outcomeName === outcomeName
+      s => s.matchId === match.id && s.outcomeName === outcomeName && s.betType === betType
     );
-    toggleSelection(match, outcomeName, oddValue);
+    toggleSelection(match, outcomeName, oddValue, betType);
 
     if (!alreadySelected) {
       // Show toast
       const teamLabel = outcomeName === 'Home' ? match.homeTeam
         : outcomeName === 'Away' ? match.awayTeam : 'Draw';
-      setToast({ type: 'added', team: teamLabel, odd: oddValue });
+      setToast({ type: 'added', team: `${betType.toUpperCase()} ${teamLabel}`, odd: oddValue });
       setTimeout(() => setToast(null), 2500);
       // Navigate to slip on mobile
       if (onOddsAdded) onOddsAdded();
     } else {
-      setToast({ type: 'removed', team: outcomeName });
+      setToast({ type: 'removed', team: `${betType.toUpperCase()} ${outcomeName}` });
       setTimeout(() => setToast(null), 1500);
     }
   };
@@ -73,8 +73,8 @@ export default function MainDashboard({ matches, selectedSport, setSelectedSport
     return '';
   };
 
-  const isSelected = (matchId, outcomeName) =>
-    selections.some((sel) => sel.matchId === matchId && sel.outcomeName === outcomeName);
+  const isSelected = (matchId, outcomeName, betType = 'back') =>
+    selections.some((sel) => sel.matchId === matchId && sel.outcomeName === outcomeName && sel.betType === betType);
 
   const sportIcon = (sport) => {
     const found = SPORT_PILLS.find(p => p.name === sport);
@@ -150,7 +150,7 @@ export default function MainDashboard({ matches, selectedSport, setSelectedSport
       </div>
 
       {/* Card Content Row */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px' }}>
+      <div className="match-card-content">
         {/* Left Side: Teams & Scores */}
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '6px', paddingRight: '12px' }}>
           {/* Home Team */}
@@ -185,38 +185,89 @@ export default function MainDashboard({ matches, selectedSport, setSelectedSport
           ) : null}
         </div>
 
-        {/* Right Side: Odds Columns */}
-        <div className="match-odds-row" style={{ display: 'flex', gap: '4px', width: '150px', flexShrink: 0, marginTop: 0, paddingBottom: 0 }} onClick={(e) => e.stopPropagation()}>
-          <button
-            className={`odds-btn ${isSelected(match.id, 'Home') ? 'odds-btn-selected' : ''} ${getFlashClass(match.id, 'home')}`}
-            onClick={() => handleOddsClick(match, 'Home', match.odds.home)}
-            style={{ height: '38px', borderRadius: '4px' }}
-          >
-            <span className="odds-label" style={{ fontSize: '0.55rem' }}>1</span>
-            <span className="odds-value" style={{ fontSize: '0.8rem' }}>{match.odds.home ? match.odds.home.toFixed(2) : '-'}</span>
-          </button>
-
-          {match.odds.draw !== null ? (
+        {/* Right Side: Back/Lay Odds Columns (Exchange Theme) */}
+        <div className="match-odds-row" style={{ display: 'flex', gap: '6px', width: '310px', flexShrink: 0, marginTop: 0, paddingBottom: 0 }} onClick={(e) => e.stopPropagation()}>
+          {/* Outcome 1: Home */}
+          <div style={{ display: 'flex', gap: '2px', flex: 1 }}>
             <button
-              className={`odds-btn ${isSelected(match.id, 'Draw') ? 'odds-btn-selected' : ''} ${getFlashClass(match.id, 'draw')}`}
-              onClick={() => handleOddsClick(match, 'Draw', match.odds.draw)}
-              style={{ height: '38px', borderRadius: '4px' }}
+              className={`odds-btn odds-btn-back ${isSelected(match.id, 'Home', 'back') ? 'odds-btn-selected' : ''} ${getFlashClass(match.id, 'home')}`}
+              onClick={() => handleOddsClick(match, 'Home', match.odds.home, 'back')}
+              style={{ height: '38px', borderRadius: '4px', padding: '2px' }}
+              title="Back Home"
             >
-              <span className="odds-label" style={{ fontSize: '0.55rem' }}>X</span>
-              <span className="odds-value" style={{ fontSize: '0.8rem' }}>{match.odds.draw ? match.odds.draw.toFixed(2) : '-'}</span>
+              <span className="odds-label" style={{ fontSize: '0.55rem', color: '#80d8ff' }}>Back</span>
+              <span className="odds-value" style={{ fontSize: '0.75rem' }}>{match.odds.home ? match.odds.home.toFixed(2) : '-'}</span>
             </button>
+            <button
+              className={`odds-btn odds-btn-lay ${isSelected(match.id, 'Home', 'lay') ? 'odds-btn-selected' : ''} ${getFlashClass(match.id, 'home')}`}
+              onClick={() => {
+                const layOdds = match.odds.home ? parseFloat((match.odds.home + 0.05).toFixed(2)) : null;
+                handleOddsClick(match, 'Home', layOdds, 'lay');
+              }}
+              style={{ height: '38px', borderRadius: '4px', padding: '2px' }}
+              title="Lay Home"
+            >
+              <span className="odds-label" style={{ fontSize: '0.55rem', color: '#ff80ab' }}>Lay</span>
+              <span className="odds-value" style={{ fontSize: '0.75rem' }}>{match.odds.home ? (match.odds.home + 0.05).toFixed(2) : '-'}</span>
+            </button>
+          </div>
+
+          {/* Outcome X: Draw */}
+          {match.odds.draw !== null ? (
+            <div style={{ display: 'flex', gap: '2px', flex: 1 }}>
+              <button
+                className={`odds-btn odds-btn-back ${isSelected(match.id, 'Draw', 'back') ? 'odds-btn-selected' : ''} ${getFlashClass(match.id, 'draw')}`}
+                onClick={() => handleOddsClick(match, 'Draw', match.odds.draw, 'back')}
+                style={{ height: '38px', borderRadius: '4px', padding: '2px' }}
+                title="Back Draw"
+              >
+                <span className="odds-label" style={{ fontSize: '0.55rem', color: '#80d8ff' }}>Back</span>
+                <span className="odds-value" style={{ fontSize: '0.75rem' }}>{match.odds.draw.toFixed(2)}</span>
+              </button>
+              <button
+                className={`odds-btn odds-btn-lay ${isSelected(match.id, 'Draw', 'lay') ? 'odds-btn-selected' : ''} ${getFlashClass(match.id, 'draw')}`}
+                onClick={() => {
+                  const layOdds = parseFloat((match.odds.draw + 0.10).toFixed(2));
+                  handleOddsClick(match, 'Draw', layOdds, 'lay');
+                }}
+                style={{ height: '38px', borderRadius: '4px', padding: '2px' }}
+                title="Lay Draw"
+              >
+                <span className="odds-label" style={{ fontSize: '0.55rem', color: '#ff80ab' }}>Lay</span>
+                <span className="odds-value" style={{ fontSize: '0.75rem' }}>{(match.odds.draw + 0.10).toFixed(2)}</span>
+              </button>
+            </div>
           ) : (
-            <div style={{ flex: 1, height: '38px', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.04)', borderRadius: '4px' }} />
+            <div style={{ flex: 1, display: 'flex', gap: '2px' }}>
+              <div style={{ flex: 1, height: '38px', backgroundColor: 'rgba(255,255,255,0.01)', border: '1px dashed rgba(255,255,255,0.02)', borderRadius: '4px' }} />
+              <div style={{ flex: 1, height: '38px', backgroundColor: 'rgba(255,255,255,0.01)', border: '1px dashed rgba(255,255,255,0.02)', borderRadius: '4px' }} />
+            </div>
           )}
 
-          <button
-            className={`odds-btn ${isSelected(match.id, 'Away') ? 'odds-btn-selected' : ''} ${getFlashClass(match.id, 'away')}`}
-            onClick={() => handleOddsClick(match, 'Away', match.odds.away)}
-            style={{ height: '38px', borderRadius: '4px' }}
-          >
-            <span className="odds-label" style={{ fontSize: '0.55rem' }}>2</span>
-            <span className="odds-value" style={{ fontSize: '0.8rem' }}>{match.odds.away ? match.odds.away.toFixed(2) : '-'}</span>
-          </button>
+          {/* Outcome 2: Away */}
+          <div style={{ display: 'flex', gap: '2px', flex: 1 }}>
+            <button
+              className={`odds-btn odds-btn-back ${isSelected(match.id, 'Away', 'back') ? 'odds-btn-selected' : ''} ${getFlashClass(match.id, 'away')}`}
+              onClick={() => handleOddsClick(match, 'Away', match.odds.away, 'back')}
+              style={{ height: '38px', borderRadius: '4px', padding: '2px' }}
+              title="Back Away"
+            >
+              <span className="odds-label" style={{ fontSize: '0.55rem', color: '#80d8ff' }}>Back</span>
+              <span className="odds-value" style={{ fontSize: '0.75rem' }}>{match.odds.away ? match.odds.away.toFixed(2) : '-'}</span>
+            </button>
+            <button
+              className={`odds-btn odds-btn-lay ${isSelected(match.id, 'Away', 'lay') ? 'odds-btn-selected' : ''} ${getFlashClass(match.id, 'away')}`}
+              onClick={() => {
+                const layOdds = match.odds.away ? parseFloat((match.odds.away + 0.05).toFixed(2)) : null;
+                handleOddsClick(match, 'Away', layOdds, 'lay');
+              }}
+              style={{ height: '38px', borderRadius: '4px', padding: '2px' }}
+              title="Lay Away"
+            >
+              <span className="odds-label" style={{ fontSize: '0.55rem', color: '#ff80ab' }}>Lay</span>
+              <span className="odds-value" style={{ fontSize: '0.75rem' }}>{match.odds.away ? (match.odds.away + 0.05).toFixed(2) : '-'}</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

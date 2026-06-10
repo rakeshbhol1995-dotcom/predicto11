@@ -290,6 +290,38 @@ h1, h2, h3, h4, h5 {
   color: var(--brand-yellow);
 }
 
+/* Back and Lay Odds Buttons (Exchange Theme) */
+.odds-btn-back {
+  background: rgba(3, 169, 244, 0.15) !important;
+  border: 1px solid rgba(3, 169, 244, 0.3) !important;
+  color: #80d8ff !important;
+}
+.odds-btn-back:hover {
+  background: rgba(3, 169, 244, 0.25) !important;
+  border-color: rgba(3, 169, 244, 0.6) !important;
+}
+.odds-btn-back.odds-btn-selected {
+  background: rgba(3, 169, 244, 0.45) !important;
+  border-color: #00b0ff !important;
+  color: #ffffff !important;
+}
+
+.odds-btn-lay {
+  background: rgba(244, 143, 177, 0.15) !important;
+  border: 1px solid rgba(244, 143, 177, 0.3) !important;
+  color: #ff80ab !important;
+}
+.odds-btn-lay:hover {
+  background: rgba(244, 143, 177, 0.25) !important;
+  border-color: rgba(244, 143, 177, 0.6) !important;
+}
+.odds-btn-lay.odds-btn-selected {
+  background: rgba(244, 67, 54, 0.35) !important;
+  border-color: #ff4081 !important;
+  color: #ffffff !important;
+}
+
+
 /* Legacy - keep for MatchDetailView */
 .match-row {
   display: flex;
@@ -317,7 +349,13 @@ h1, h2, h3, h4, h5 {
 }
 
 /* ===== RESPONSIVE BREAKPOINTS ===== */
-@media (max-width: 1024px) {
+@media (min-width: 769px) and (max-width: 1200px) {
+  .main-layout {
+    grid-template-columns: 210px 1fr 290px;
+  }
+}
+
+@media (max-width: 768px) {
   .main-layout {
     grid-template-columns: 1fr;
     height: calc(100% - 112px);
@@ -598,7 +636,7 @@ h1, h2, h3, h4, h5 {
   align-items: flex-start;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 768px) {
   .chat-widget-container {
     bottom: 80px;
     left: 16px;
@@ -706,7 +744,7 @@ h1, h2, h3, h4, h5 {
   box-shadow: 0 -4px 16px rgba(0,0,0,0.4);
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 768px) {
   .mobile-bottom-nav {
     display: flex;
   }
@@ -1318,13 +1356,30 @@ h1, h2, h3, h4, h5 {
   overscroll-behavior-y: contain;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 768px) {
   .casino-lobby-container {
     padding: 12px !important;
     padding-bottom: 160px !important; /* Safe zone above bottom navbar */
   }
 }
 
+/* Match Card Responsive Grid/Flex Stacking */
+.match-card-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  gap: 12px;
+}
 
-
-
+@media (max-width: 600px) {
+  .match-card-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .match-odds-row {
+    width: 100% !important;
+    margin-top: 4px;
+  }
+}

@@ -23,11 +23,22 @@ export default function BetSlip() {
 
   // Calculate statistics (displayed in current selected fiat currency)
   const totalOdds = selections.reduce((acc, curr) => acc * curr.odd, 1);
-  const totalSingleStake = selections.reduce((acc, curr) => acc + (parseFloat(curr.stake) || 0), 0);
+  
+  // For back bets, the cost is the stake. For lay bets, the cost is the liability: Stake * (Odd - 1)
+  const totalSingleStakeOrLiability = selections.reduce((acc, curr) => {
+    const stakeVal = parseFloat(curr.stake) || 0;
+    if (curr.betType === 'lay') {
+      return acc + (stakeVal * (curr.odd - 1));
+    }
+    return acc + stakeVal;
+  }, 0);
+
   const totalPotentialReturnSingle = selections.reduce(
     (acc, curr) => acc + (parseFloat(curr.stake) || 0) * curr.odd,
     0
   );
+
+  const hasLaySelection = selections.some(sel => sel.betType === 'lay');
 
   const handleQuickStake = (val, selectionId = null) => {
     // Quick stakes are in fiat units: e.g. 100 INR / 10 USD
@@ -192,10 +203,33 @@ export default function BetSlip() {
                 {/* Individual Selections */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {selections.map((sel) => (
-                    <div key={sel.id} style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div key={sel.id} style={{ 
+                      backgroundColor: 'var(--bg-card)', 
+                      border: '1px solid var(--border-color)', 
+                      borderLeft: sel.betType === 'lay' ? '4.5px solid var(--live-red)' : '4.5px solid #00b0ff',
+                      borderRadius: '8px', 
+                      padding: '10px', 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      gap: '8px' 
+                    }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div>
-                          <h5 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--brand-yellow)' }}>{sel.outcomeName}</h5>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <h5 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#ffffff' }}>{sel.outcomeName}</h5>
+                            <span style={{
+                              fontSize: '0.58rem',
+                              fontWeight: 800,
+                              textTransform: 'uppercase',
+                              padding: '1px 5px',
+                              borderRadius: '3px',
+                              backgroundColor: sel.betType === 'lay' ? 'rgba(255, 62, 108, 0.15)' : 'rgba(3, 169, 244, 0.15)',
+                              color: sel.betType === 'lay' ? '#ff80ab' : '#80d8ff',
+                              border: `1px solid ${sel.betType === 'lay' ? 'rgba(255, 62, 108, 0.2)' : 'rgba(3, 169, 244, 0.2)'}`
+                            }}>
+                              {sel.betType === 'lay' ? 'LAY' : 'BACK'}
+                            </span>
+                          </div>
                           <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{sel.market} • {sel.sport}</span>
                           <p style={{ fontSize: '0.75rem', color: '#ffffff', marginTop: '2px' }}>{sel.matchName}</p>
                         </div>
@@ -217,7 +251,7 @@ export default function BetSlip() {
                               <span style={{ position: 'absolute', left: '8px', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>{fiatSymbol}</span>
                               <input
                                 type="number"
-                                placeholder="Stake"
+                                placeholder={sel.betType === 'lay' ? "Backer's Stake" : "Stake"}
                                 value={sel.stake}
                                 onChange={(e) => updateStake(sel.id, e.target.value)}
                                 style={{
@@ -233,8 +267,11 @@ export default function BetSlip() {
                               />
                             </div>
                             {sel.stake && (
-                              <span style={{ fontSize: '0.7rem', color: 'var(--live-green)', fontWeight: 600 }}>
-                                Return: {fiatSymbol}{(parseFloat(sel.stake) * sel.odd).toFixed(2)}
+                              <span style={{ fontSize: '0.7rem', color: sel.betType === 'lay' ? 'var(--live-red)' : 'var(--live-green)', fontWeight: 600 }}>
+                                {sel.betType === 'lay' 
+                                  ? `Liability: ${fiatSymbol}${(parseFloat(sel.stake) * (sel.odd - 1)).toFixed(2)}`
+                                  : `Return: ${fiatSymbol}${(parseFloat(sel.stake) * sel.odd).toFixed(2)}`
+                                }
                               </span>
                             )}
                           </div>
@@ -262,17 +299,23 @@ export default function BetSlip() {
                     flexDirection: 'column',
                     gap: '8px'
                   }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.8rem' }}>
-                      <input
-                        type="checkbox"
-                        checked={isAccumulator}
-                        onChange={(e) => setIsAccumulator(e.target.checked)}
-                        style={{ accentColor: 'var(--brand-emerald)' }}
-                      />
-                      <span>Bet as Accumulator / Combo</span>
-                    </label>
+                    {hasLaySelection ? (
+                      <div style={{ fontSize: '0.75rem', color: '#ff9800', backgroundColor: 'rgba(255, 152, 0, 0.1)', padding: '8px', borderRadius: '6px', border: '1px solid rgba(255, 152, 0, 0.2)' }}>
+                        ⚠️ Combo/Accumulator bets are not available when Lay selections are in the slip.
+                      </div>
+                    ) : (
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.8rem' }}>
+                        <input
+                          type="checkbox"
+                          checked={isAccumulator}
+                          onChange={(e) => setIsAccumulator(e.target.checked)}
+                          style={{ accentColor: 'var(--brand-emerald)' }}
+                        />
+                        <span>Bet as Accumulator / Combo</span>
+                      </label>
+                    )}
 
-                    {isAccumulator && (
+                    {isAccumulator && !hasLaySelection && (
                       <div style={{ backgroundColor: 'rgba(5, 196, 139, 0.04)', border: '1px dashed var(--brand-emerald)', borderRadius: '8px', padding: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
                           <span>Combined Odds:</span>
@@ -319,13 +362,13 @@ export default function BetSlip() {
                 {/* Place Bet Footer Summary */}
                 <div style={{ marginTop: 'auto', borderTop: '1px solid var(--border-color)', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-                    <span style={{ color: 'var(--text-muted)' }}>Total Stake:</span>
+                    <span style={{ color: 'var(--text-muted)' }}>{hasLaySelection ? "Total Stake/Liability:" : "Total Stake:"}</span>
                     <span style={{ fontWeight: 700 }}>
-                      {fiatSymbol}{isAccumulator ? (parseFloat(accStake) || 0).toFixed(2) : totalSingleStake.toLocaleString()}
+                      {fiatSymbol}{isAccumulator ? (parseFloat(accStake) || 0).toFixed(2) : totalSingleStakeOrLiability.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '4px' }}>
-                    <span style={{ color: 'var(--text-muted)' }}>Potential Returns:</span>
+                    <span style={{ color: 'var(--text-muted)' }}>{hasLaySelection ? "Potential Return (incl. liability):" : "Potential Returns:"}</span>
                     <span style={{ fontWeight: 700, color: 'var(--live-green)' }}>
                       {fiatSymbol}{isAccumulator ? ((parseFloat(accStake) || 0) * totalOdds).toFixed(2) : totalPotentialReturnSingle.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                     </span>
@@ -370,6 +413,7 @@ export default function BetSlip() {
                 <div key={bet.id} style={{
                   backgroundColor: 'var(--bg-card)',
                   border: '1px solid var(--border-color)',
+                  borderLeft: bet.betType === 'lay' ? '4.5px solid var(--live-red)' : '4.5px solid var(--brand-emerald)',
                   borderRadius: '8px',
                   padding: '12px',
                   display: 'flex',
@@ -385,7 +429,7 @@ export default function BetSlip() {
                       padding: '2px 6px',
                       borderRadius: '4px'
                     }}>
-                      {bet.type.toUpperCase()} • {bet.status.toUpperCase()}
+                      {bet.type.toUpperCase()} • {bet.betType === 'lay' ? 'LAY' : 'BACK'} • {bet.status.toUpperCase()}
                     </span>
                     <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{bet.date}</span>
                   </div>
@@ -395,7 +439,20 @@ export default function BetSlip() {
                     {bet.selections.map((sel, idx) => (
                       <div key={idx} style={{ fontSize: '0.75rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ fontWeight: 600, color: 'var(--brand-yellow)' }}>{sel.outcomeName} @ {sel.odd.toFixed(2)}</span>
+                          <span style={{ fontWeight: 600, color: 'var(--brand-yellow)' }}>
+                            {sel.outcomeName} @ {sel.odd.toFixed(2)}
+                            <span style={{
+                              marginLeft: '6px',
+                              fontSize: '0.55rem',
+                              fontWeight: 800,
+                              padding: '1px 3px',
+                              borderRadius: '2px',
+                              backgroundColor: sel.betType === 'lay' ? 'rgba(255, 62, 108, 0.15)' : 'rgba(3, 169, 244, 0.15)',
+                              color: sel.betType === 'lay' ? '#ff80ab' : '#80d8ff'
+                            }}>
+                              {sel.betType === 'lay' ? 'LAY' : 'BACK'}
+                            </span>
+                          </span>
                           <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>{sel.market}</span>
                         </div>
                         <p style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>{sel.matchName}</p>
@@ -415,7 +472,7 @@ export default function BetSlip() {
                     border: '1px solid rgba(255,255,255,0.03)'
                   }}>
                     <div>
-                      <span style={{ color: 'var(--text-muted)' }}>Stake:</span> <span style={{ fontWeight: 600 }}>{fiatSymbol}{convertUsdtToFiat(bet.totalStakeUsdt).toLocaleString()}</span>
+                      <span style={{ color: 'var(--text-muted)' }}>{bet.betType === 'lay' ? "Liability:" : "Stake:"}</span> <span style={{ fontWeight: 600 }}>{fiatSymbol}{convertUsdtToFiat(bet.totalStakeUsdt).toLocaleString()}</span>
                     </div>
                     <div>
                       <span style={{ color: 'var(--text-muted)' }}>Returns:</span> <span style={{ fontWeight: 600, color: 'var(--live-green)' }}>{fiatSymbol}{convertUsdtToFiat(bet.potentialPayoutUsdt).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
