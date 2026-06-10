@@ -1,27 +1,27 @@
 :root {
-  /* Color Palette - Premium Slate & Emerald Neon */
-  --brand-teal-deep: #051915;
-  --brand-teal-nav: #082d25;
-  --brand-emerald: #05c48b;
-  --brand-yellow: #c6ff00;
-  --brand-yellow-hover: #b2e600;
+  /* Color Palette - Premium Slate & Betfair Yellow Theme */
+  --brand-teal-deep: #0c101d;
+  --brand-teal-nav: #1c2438;
+  --brand-emerald: #ffb80c;
+  --brand-yellow: #ffb80c;
+  --brand-yellow-hover: #ffa000;
   --brand-gold: #ffd700;
   --brand-purple: #9c27b0;
   
-  --bg-dark: #05070a;
-  --bg-panel: rgba(16, 21, 30, 0.75);
-  --bg-card: rgba(28, 36, 48, 0.6);
-  --bg-card-hover: rgba(38, 48, 64, 0.85);
+  --bg-dark: #0b0e14;
+  --bg-panel: rgba(26, 34, 51, 0.85);
+  --bg-card: rgba(36, 48, 71, 0.7);
+  --bg-card-hover: rgba(48, 64, 94, 0.9);
   
   --bg-odds: rgba(33, 43, 58, 0.8);
   --bg-odds-hover: rgba(49, 63, 85, 0.95);
   
   --text-main: #ffffff;
   --text-muted: #8fa0b5;
-  --text-yellow: #c6ff00;
+  --text-yellow: #ffb80c;
   --live-green: #00ffaa;
-  --live-red: #ff3e6c;
-  --border-color: rgba(255, 255, 255, 0.07);
+  --live-red: #ff4081;
+  --border-color: rgba(255, 255, 255, 0.08);
 
   /* Fonts */
   --font-display: 'Outfit', sans-serif;
@@ -290,35 +290,37 @@ h1, h2, h3, h4, h5 {
   color: var(--brand-yellow);
 }
 
-/* Back and Lay Odds Buttons (Exchange Theme) */
+/* Back and Lay Odds Buttons (Betfair Solid Theme) */
 .odds-btn-back {
-  background: rgba(3, 169, 244, 0.15) !important;
-  border: 1px solid rgba(3, 169, 244, 0.3) !important;
-  color: #80d8ff !important;
+  background: #2b82c9 !important;
+  border: 1px solid #1c7ed6 !important;
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 .odds-btn-back:hover {
-  background: rgba(3, 169, 244, 0.25) !important;
-  border-color: rgba(3, 169, 244, 0.6) !important;
+  background: #1c7ed6 !important;
+  border-color: #1971c2 !important;
 }
 .odds-btn-back.odds-btn-selected {
-  background: rgba(3, 169, 244, 0.45) !important;
-  border-color: #00b0ff !important;
-  color: #ffffff !important;
+  background: #1864ab !important;
+  border-color: #15aabf !important;
+  box-shadow: 0 0 8px rgba(24, 100, 171, 0.5);
 }
 
 .odds-btn-lay {
-  background: rgba(244, 143, 177, 0.15) !important;
-  border: 1px solid rgba(244, 143, 177, 0.3) !important;
-  color: #ff80ab !important;
+  background: #f06292 !important;
+  border: 1px solid #e91e63 !important;
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 .odds-btn-lay:hover {
-  background: rgba(244, 143, 177, 0.25) !important;
-  border-color: rgba(244, 143, 177, 0.6) !important;
+  background: #e91e63 !important;
+  border-color: #d81b60 !important;
 }
 .odds-btn-lay.odds-btn-selected {
-  background: rgba(244, 67, 54, 0.35) !important;
-  border-color: #ff4081 !important;
-  color: #ffffff !important;
+  background: #c2185b !important;
+  border-color: #f06292 !important;
+  box-shadow: 0 0 8px rgba(194, 24, 91, 0.5);
 }
 
 
