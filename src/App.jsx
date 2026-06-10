@@ -560,6 +560,11 @@ function MainAppContent() {
               match={selectedMatch} 
               onBack={() => setCurrentView('dashboard')} 
               oddsFlash={oddsFlash}
+              onOddsAdded={() => {
+                if (window.innerWidth <= 768) {
+                  setCurrentView('mobile-slip');
+                }
+              }}
             />
           ) : currentView === 'mobile-slip' || currentView === 'mobile-mybets' ? (
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>

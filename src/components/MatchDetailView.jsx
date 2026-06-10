@@ -2,10 +2,21 @@ import React from 'react';
 import { useBet } from '../context/BetContext';
 import { ArrowLeft, Play, Clock, BarChart2 } from 'lucide-react';
 
-export default function MatchDetailView({ match, onBack, oddsFlash }) {
+export default function MatchDetailView({ match, onBack, oddsFlash, onOddsAdded }) {
   if (!match) return null;
 
   const { toggleSelection, selections, user } = useBet();
+
+  const handleOddsClick = (outcomeName, oddValue, betType = 'back', marketName = "Match Winner") => {
+    if (!user || oddValue === null) return;
+    const alreadySelected = selections.some(
+      (sel) => sel.matchId === match.id && sel.outcomeName === outcomeName && sel.market === marketName && sel.betType === betType
+    );
+    toggleSelection(match, outcomeName, oddValue, betType, marketName);
+    if (!alreadySelected && onOddsAdded) {
+      onOddsAdded();
+    }
+  };
 
   const isSelected = (outcomeName, betType = 'back', marketName = "Match Winner") => {
     return selections.some(
@@ -314,7 +325,7 @@ export default function MatchDetailView({ match, onBack, oddsFlash }) {
               <div style={{ display: 'flex', gap: '6px', width: '160px' }}>
                 <button 
                   className={`odds-btn odds-btn-back ${isSelected(match.homeTeam, 'back') ? 'odds-btn-selected' : ''} ${getFlashClass('home')}`}
-                  onClick={() => user && toggleSelection(match, match.homeTeam, match.odds.home, 'back')}
+                  onClick={() => handleOddsClick(match.homeTeam, match.odds.home, 'back')}
                   disabled={!user || !match.odds.home}
                   style={{ height: '36px', borderRadius: '4px', opacity: user ? 1 : 0.6, cursor: user ? 'pointer' : 'not-allowed' }}
                 >
@@ -325,7 +336,7 @@ export default function MatchDetailView({ match, onBack, oddsFlash }) {
                   className={`odds-btn odds-btn-lay ${isSelected(match.homeTeam, 'lay') ? 'odds-btn-selected' : ''} ${getFlashClass('home')}`}
                   onClick={() => {
                     const layOdds = match.odds.home ? parseFloat((match.odds.home + 0.05).toFixed(2)) : null;
-                    user && toggleSelection(match, match.homeTeam, layOdds, 'lay');
+                    handleOddsClick(match.homeTeam, layOdds, 'lay');
                   }}
                   disabled={!user || !match.odds.home}
                   style={{ height: '36px', borderRadius: '4px', opacity: user ? 1 : 0.6, cursor: user ? 'pointer' : 'not-allowed' }}
@@ -343,7 +354,7 @@ export default function MatchDetailView({ match, onBack, oddsFlash }) {
                 <div style={{ display: 'flex', gap: '6px', width: '160px' }}>
                   <button 
                     className={`odds-btn odds-btn-back ${isSelected('Draw', 'back') ? 'odds-btn-selected' : ''} ${getFlashClass('draw')}`}
-                    onClick={() => user && toggleSelection(match, 'Draw', match.odds.draw, 'back')}
+                    onClick={() => handleOddsClick('Draw', match.odds.draw, 'back')}
                     disabled={!user}
                     style={{ height: '36px', borderRadius: '4px', opacity: user ? 1 : 0.6, cursor: user ? 'pointer' : 'not-allowed' }}
                   >
@@ -354,7 +365,7 @@ export default function MatchDetailView({ match, onBack, oddsFlash }) {
                     className={`odds-btn odds-btn-lay ${isSelected('Draw', 'lay') ? 'odds-btn-selected' : ''} ${getFlashClass('draw')}`}
                     onClick={() => {
                       const layOdds = parseFloat((match.odds.draw + 0.10).toFixed(2));
-                      user && toggleSelection(match, 'Draw', layOdds, 'lay');
+                      handleOddsClick('Draw', layOdds, 'lay');
                     }}
                     disabled={!user}
                     style={{ height: '36px', borderRadius: '4px', opacity: user ? 1 : 0.6, cursor: user ? 'pointer' : 'not-allowed' }}
@@ -372,7 +383,7 @@ export default function MatchDetailView({ match, onBack, oddsFlash }) {
               <div style={{ display: 'flex', gap: '6px', width: '160px' }}>
                 <button 
                   className={`odds-btn odds-btn-back ${isSelected(match.awayTeam, 'back') ? 'odds-btn-selected' : ''} ${getFlashClass('away')}`}
-                  onClick={() => user && toggleSelection(match, match.awayTeam, match.odds.away, 'back')}
+                  onClick={() => handleOddsClick(match.awayTeam, match.odds.away, 'back')}
                   disabled={!user || !match.odds.away}
                   style={{ height: '36px', borderRadius: '4px', opacity: user ? 1 : 0.6, cursor: user ? 'pointer' : 'not-allowed' }}
                 >
@@ -383,7 +394,7 @@ export default function MatchDetailView({ match, onBack, oddsFlash }) {
                   className={`odds-btn odds-btn-lay ${isSelected(match.awayTeam, 'lay') ? 'odds-btn-selected' : ''} ${getFlashClass('away')}`}
                   onClick={() => {
                     const layOdds = match.odds.away ? parseFloat((match.odds.away + 0.05).toFixed(2)) : null;
-                    user && toggleSelection(match, match.awayTeam, layOdds, 'lay');
+                    handleOddsClick(match.awayTeam, layOdds, 'lay');
                   }}
                   disabled={!user || !match.odds.away}
                   style={{ height: '36px', borderRadius: '4px', opacity: user ? 1 : 0.6, cursor: user ? 'pointer' : 'not-allowed' }}
@@ -404,7 +415,7 @@ export default function MatchDetailView({ match, onBack, oddsFlash }) {
               <div
                 key={i}
                 className={`odds-cell ${isSelected(opt.outcome, 'Asian Handicap') ? 'selected' : ''}`}
-                onClick={() => toggleSelection(match, opt.outcome, opt.odd, 'Asian Handicap')}
+                onClick={() => handleOddsClick(opt.outcome, opt.odd, 'Asian Handicap')}
                 style={{ opacity: user ? 1 : 0.6, cursor: user ? 'pointer' : 'not-allowed' }}
               >
                 <span className="odds-lbl">{opt.outcome}</span>
@@ -422,7 +433,7 @@ export default function MatchDetailView({ match, onBack, oddsFlash }) {
               <div
                 key={i}
                 className={`odds-cell ${isSelected(opt.outcome, 'Over/Under Goals') ? 'selected' : ''}`}
-                onClick={() => toggleSelection(match, opt.outcome, opt.odd, 'Over/Under Goals')}
+                onClick={() => handleOddsClick(opt.outcome, opt.odd, 'Over/Under Goals')}
                 style={{ opacity: user ? 1 : 0.6, cursor: user ? 'pointer' : 'not-allowed' }}
               >
                 <span className="odds-lbl">{opt.outcome}</span>
@@ -440,7 +451,7 @@ export default function MatchDetailView({ match, onBack, oddsFlash }) {
               <div
                 key={i}
                 className={`odds-cell ${isSelected(opt.outcome, 'Double Chance') ? 'selected' : ''}`}
-                onClick={() => toggleSelection(match, opt.outcome, opt.odd, 'Double Chance')}
+                onClick={() => handleOddsClick(opt.outcome, opt.odd, 'Double Chance')}
                 style={{ opacity: user ? 1 : 0.6, cursor: user ? 'pointer' : 'not-allowed' }}
               >
                 <span className="odds-lbl">{opt.outcome}</span>
@@ -458,7 +469,7 @@ export default function MatchDetailView({ match, onBack, oddsFlash }) {
               <div
                 key={i}
                 className={`odds-cell ${isSelected(opt.outcome, 'Correct Score') ? 'selected' : ''}`}
-                onClick={() => toggleSelection(match, opt.outcome, opt.odd, 'Correct Score')}
+                onClick={() => handleOddsClick(opt.outcome, opt.odd, 'Correct Score')}
                 style={{ opacity: user ? 1 : 0.6, cursor: user ? 'pointer' : 'not-allowed' }}
               >
                 <span className="odds-lbl">Score: {opt.outcome}</span>
