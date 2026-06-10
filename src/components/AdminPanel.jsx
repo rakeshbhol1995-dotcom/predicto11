@@ -87,29 +87,10 @@ export default function AdminPanel({ matches, onUpdateMatches }) {
   const activeBetsCount = placedBets.filter(b => b.status === 'active').length;
 
   return (
-    <div style={{ 
-      padding: '24px', 
-      display: 'flex', 
-      flexDirection: 'column', 
-      gap: '24px', 
-      overflowY: 'auto', 
-      height: '100%',
-      backgroundColor: '#05060a'
-    }}>
+    <div className="admin-panel-container">
       
       {/* 1. Header Banner */}
-      <div style={{
-        background: 'linear-gradient(135deg, rgba(20, 11, 40, 0.95) 0%, rgba(8, 6, 15, 0.95) 100%)',
-        border: '1.5px solid rgba(168, 85, 247, 0.4)',
-        borderRadius: '16px',
-        padding: '20px 24px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        boxShadow: '0 12px 40px rgba(168, 85, 247, 0.15)',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
+      <div className="admin-header-banner">
         {/* Neon glow effect */}
         <div style={{
           position: 'absolute',
@@ -290,13 +271,7 @@ export default function AdminPanel({ matches, onUpdateMatches }) {
       </div>
 
       {/* 3. Navigation Controls */}
-      <div style={{ 
-        display: 'flex', 
-        gap: '8px', 
-        borderBottom: '1px solid rgba(255,255,255,0.08)', 
-        paddingBottom: '8px',
-        flexWrap: 'wrap'
-      }}>
+      <div className="admin-tabs-nav">
         {[
           { key: 'matches', label: 'Match Event Control', icon: Play },
           { key: 'users', label: 'Registered Players & Wallet', icon: Users },

@@ -551,7 +551,7 @@ function MainAppContent() {
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          gridColumn: (currentView === 'admin') ? '1 / span 3' : undefined
+          gridColumn: (currentView === 'admin') ? '1 / span 2' : undefined
         }}>
           {currentView === 'admin' ? (
             <AdminPanel matches={matches} onUpdateMatches={setMatches} />
@@ -613,8 +613,8 @@ function MainAppContent() {
           )}
         </main>
 
-        {/* Right Sidebar: Match Tracker and Bet Slip (hidden in admin) */}
-        {currentView !== 'admin' && (
+        {/* Right Sidebar: Match Tracker and Bet Slip */}
+        {currentView !== 'mobile-slip' && currentView !== 'mobile-mybets' && (
           <div className="right-sidebar">
             {/* Top: Match Tracker (only if not viewing mobile drawers) */}
             {currentView !== 'mobile-slip' && currentView !== 'mobile-mybets' && (

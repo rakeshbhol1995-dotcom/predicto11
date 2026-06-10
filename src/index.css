@@ -1385,3 +1385,57 @@ h1, h2, h3, h4, h5 {
     margin-top: 4px;
   }
 }
+
+/* Admin Panel Mobile Responsiveness */
+.admin-panel-container {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  overflow-y: auto;
+  height: 100%;
+  background-color: #05060a;
+}
+
+.admin-header-banner {
+  background: linear-gradient(135deg, rgba(20, 11, 40, 0.95) 0%, rgba(8, 6, 15, 0.95) 100%);
+  border: 1.5px solid rgba(168, 85, 247, 0.4);
+  border-radius: 16px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 12px 40px rgba(168, 85, 247, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-tabs-nav {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 8px;
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.admin-tabs-nav::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .admin-panel-container {
+    padding: 12px;
+    gap: 16px;
+  }
+  .admin-header-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+  }
+  .admin-header-banner div:last-child {
+    align-items: flex-start !important;
+  }
+}
