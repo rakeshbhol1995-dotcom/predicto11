@@ -591,8 +591,8 @@ function MainAppContent() {
                   {currentView === 'mobile-slip' ? 'Bet Slip' : 'My Bets'}
                 </span>
               </div>
-              <div style={{ flexGrow: 1, overflowY: 'auto' }}>
-                <BetSlip />
+              <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                <BetSlip initialTab={currentView === 'mobile-mybets' ? 'mybets' : 'slip'} />
               </div>
             </div>
           ) : (

@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useBet } from '../context/BetContext';
 import { Trash2, ShoppingCart, Briefcase, CheckCircle, AlertCircle } from 'lucide-react';
 
-export default function BetSlip() {
+export default function BetSlip({ initialTab }) {
   const {
     selections,
     placedBets,
@@ -15,7 +15,13 @@ export default function BetSlip() {
     convertUsdtToFiat
   } = useBet();
 
-  const [activeTab, setActiveTab] = useState('slip'); // 'slip' or 'mybets'
+  const [activeTab, setActiveTab] = useState(initialTab || 'slip'); // 'slip' or 'mybets'
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
   const [isAccumulator, setIsAccumulator] = useState(false);
   const [accStake, setAccStake] = useState('');
   const [loading, setLoading] = useState(false);
@@ -82,10 +88,11 @@ export default function BetSlip() {
       backgroundColor: 'var(--bg-panel)',
       display: 'flex',
       flexDirection: 'column',
-      height: '100%'
+      height: '100%',
+      overflow: 'hidden'
     }}>
       {/* Tabs */}
-      <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', height: '48px' }}>
+      <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', height: '48px', flexShrink: 0 }}>
         <button
           onClick={() => setActiveTab('slip')}
           style={{
@@ -162,8 +169,8 @@ export default function BetSlip() {
         </button>
       </div>
 
-      {/* Main Content Area */}
-      <div style={{ flexGrow: 1, overflowY: 'auto', padding: '12px', display: 'flex', flexDirection: 'column' }}>
+      {/* Scrollable Main Area */}
+      <div style={{ flexGrow: 1, overflowY: 'auto', padding: '12px', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         {message && (
           <div style={{
             display: 'flex',
@@ -184,151 +191,75 @@ export default function BetSlip() {
 
         {/* Tab 1: Bet Slip */}
         {activeTab === 'slip' && (
-          <>
-            {selections.length === 0 ? (
-              <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', minHeight: '200px' }}>
-                <ShoppingCart size={32} style={{ strokeWidth: 1.5, marginBottom: '12px' }} />
-                <span style={{ fontSize: '0.85rem' }}>Your betslip is empty</span>
-                <span style={{ fontSize: '0.75rem', marginTop: '4px' }}>Click on any odds card to add selection</span>
+          selections.length === 0 ? (
+            <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', minHeight: '200px' }}>
+              <ShoppingCart size={32} style={{ strokeWidth: 1.5, marginBottom: '12px' }} />
+              <span style={{ fontSize: '0.85rem' }}>Your betslip is empty</span>
+              <span style={{ fontSize: '0.75rem', marginTop: '4px' }}>Click on any odds card to add selection</span>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>SELECTIONS</span>
+                <button onClick={clearSlip} style={{ background: 'none', border: 'none', color: 'var(--live-red)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', fontWeight: 600 }}>
+                  <Trash2 size={12} /> Clear All
+                </button>
               </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flexGrow: 1 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>SELECTIONS</span>
-                  <button onClick={clearSlip} style={{ background: 'none', border: 'none', color: 'var(--live-red)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', fontWeight: 600 }}>
-                    <Trash2 size={12} /> Clear All
-                  </button>
-                </div>
 
-                {/* Individual Selections */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {selections.map((sel) => (
-                    <div key={sel.id} style={{ 
-                      backgroundColor: 'var(--bg-card)', 
-                      border: '1px solid var(--border-color)', 
-                      borderLeft: sel.betType === 'lay' ? '4.5px solid var(--live-red)' : '4.5px solid #00b0ff',
-                      borderRadius: '8px', 
-                      padding: '10px', 
-                      display: 'flex', 
-                      flexDirection: 'column', 
-                      gap: '8px' 
-                    }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <h5 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#ffffff' }}>{sel.outcomeName}</h5>
-                            <span style={{
-                              fontSize: '0.58rem',
-                              fontWeight: 800,
-                              textTransform: 'uppercase',
-                              padding: '1px 5px',
-                              borderRadius: '3px',
-                              backgroundColor: sel.betType === 'lay' ? 'rgba(255, 62, 108, 0.15)' : 'rgba(3, 169, 244, 0.15)',
-                              color: sel.betType === 'lay' ? '#ff80ab' : '#80d8ff',
-                              border: `1px solid ${sel.betType === 'lay' ? 'rgba(255, 62, 108, 0.2)' : 'rgba(3, 169, 244, 0.2)'}`
-                            }}>
-                              {sel.betType === 'lay' ? 'LAY' : 'BACK'}
-                            </span>
-                          </div>
-                          <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{sel.market} • {sel.sport}</span>
-                          <p style={{ fontSize: '0.75rem', color: '#ffffff', marginTop: '2px' }}>{sel.matchName}</p>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ color: 'var(--brand-emerald)', fontWeight: 800, fontSize: '0.95rem' }}>
-                            {sel.odd.toFixed(2)}
-                          </span>
-                          <button onClick={() => removeSelection(sel.id)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
-                            <Trash2 size={12} />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Stake input */}
-                      {!isAccumulator && (
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center' }}>
-                              <span style={{ position: 'absolute', left: '8px', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>{fiatSymbol}</span>
-                              <input
-                                type="number"
-                                placeholder={sel.betType === 'lay' ? "Backer's Stake" : "Stake"}
-                                value={sel.stake}
-                                onChange={(e) => updateStake(sel.id, e.target.value)}
-                                style={{
-                                  width: '100%',
-                                  backgroundColor: 'var(--bg-panel)',
-                                  border: '1px solid var(--border-color)',
-                                  borderRadius: '4px',
-                                  padding: '6px 6px 6px 20px',
-                                  color: '#ffffff',
-                                  fontSize: '0.8rem',
-                                  outline: 'none'
-                                }}
-                              />
-                            </div>
-                            {sel.stake && (
-                              <span style={{ fontSize: '0.7rem', color: sel.betType === 'lay' ? 'var(--live-red)' : 'var(--live-green)', fontWeight: 600 }}>
-                                {sel.betType === 'lay' 
-                                  ? `Liability: ${fiatSymbol}${(parseFloat(sel.stake) * (sel.odd - 1)).toFixed(2)}`
-                                  : `Return: ${fiatSymbol}${(parseFloat(sel.stake) * sel.odd).toFixed(2)}`
-                                }
-                              </span>
-                            )}
-                          </div>
-                          {/* Quick Stakes */}
-                          <div style={{ display: 'flex', gap: '4px', marginTop: '6px' }}>
-                            {[100, 500, 1000, 5000].map((v) => (
-                              <button key={v} onClick={() => handleQuickStake(v, sel.id)} style={{ flex: 1, border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-panel)', borderRadius: '3px', fontSize: '0.65rem', color: 'var(--text-muted)', padding: '2px 0', cursor: 'pointer' }}>
-                                +{v}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Accumulator Toggle (Only if more than 1 selection) */}
-                {selections.length > 1 && (
-                  <div style={{
-                    marginTop: '8px',
-                    borderTop: '1px solid var(--border-color)',
-                    paddingTop: '12px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '8px'
+              {/* Individual Selections */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {selections.map((sel) => (
+                  <div key={sel.id} style={{ 
+                    backgroundColor: 'var(--bg-card)', 
+                    border: '1px solid var(--border-color)', 
+                    borderLeft: sel.betType === 'lay' ? '4.5px solid var(--live-red)' : '4.5px solid #00b0ff',
+                    borderRadius: '8px', 
+                    padding: '10px', 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    gap: '8px' 
                   }}>
-                    {hasLaySelection ? (
-                      <div style={{ fontSize: '0.75rem', color: '#ff9800', backgroundColor: 'rgba(255, 152, 0, 0.1)', padding: '8px', borderRadius: '6px', border: '1px solid rgba(255, 152, 0, 0.2)' }}>
-                        ⚠️ Combo/Accumulator bets are not available when Lay selections are in the slip.
-                      </div>
-                    ) : (
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.8rem' }}>
-                        <input
-                          type="checkbox"
-                          checked={isAccumulator}
-                          onChange={(e) => setIsAccumulator(e.target.checked)}
-                          style={{ accentColor: 'var(--brand-emerald)' }}
-                        />
-                        <span>Bet as Accumulator / Combo</span>
-                      </label>
-                    )}
-
-                    {isAccumulator && !hasLaySelection && (
-                      <div style={{ backgroundColor: 'rgba(5, 196, 139, 0.04)', border: '1px dashed var(--brand-emerald)', borderRadius: '8px', padding: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-                          <span>Combined Odds:</span>
-                          <span style={{ fontWeight: 800, color: 'var(--brand-emerald)' }}>{totalOdds.toFixed(2)}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <h5 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#ffffff' }}>{sel.outcomeName}</h5>
+                          <span style={{
+                            fontSize: '0.58rem',
+                            fontWeight: 800,
+                            textTransform: 'uppercase',
+                            padding: '1px 5px',
+                            borderRadius: '3px',
+                            backgroundColor: sel.betType === 'lay' ? 'rgba(255, 62, 108, 0.15)' : 'rgba(3, 169, 244, 0.15)',
+                            color: sel.betType === 'lay' ? '#ff80ab' : '#80d8ff',
+                            border: `1px solid ${sel.betType === 'lay' ? 'rgba(255, 62, 108, 0.2)' : 'rgba(3, 169, 244, 0.2)'}`
+                          }}>
+                            {sel.betType === 'lay' ? 'LAY' : 'BACK'}
+                          </span>
                         </div>
+                        <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{sel.market} • {sel.sport}</span>
+                        <p style={{ fontSize: '0.75rem', color: '#ffffff', marginTop: '2px' }}>{sel.matchName}</p>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ color: 'var(--brand-emerald)', fontWeight: 800, fontSize: '0.95rem' }}>
+                          {sel.odd.toFixed(2)}
+                        </span>
+                        <button onClick={() => removeSelection(sel.id)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Stake input */}
+                    {!isAccumulator && (
+                      <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center' }}>
-                            <span style={{ position: 'absolute', left: '8px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>{fiatSymbol}</span>
+                            <span style={{ position: 'absolute', left: '8px', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>{fiatSymbol}</span>
                             <input
                               type="number"
-                              placeholder="Acc Stake"
-                              value={accStake}
-                              onChange={(e) => setAccStake(e.target.value)}
+                              placeholder={sel.betType === 'lay' ? "Backer's Stake" : "Stake"}
+                              value={sel.stake}
+                              onChange={(e) => updateStake(sel.id, e.target.value)}
                               style={{
                                 width: '100%',
                                 backgroundColor: 'var(--bg-panel)',
@@ -341,15 +272,19 @@ export default function BetSlip() {
                               }}
                             />
                           </div>
-                          {accStake && (
-                            <span style={{ fontSize: '0.7rem', color: 'var(--live-green)', fontWeight: 600 }}>
-                              Payout: {fiatSymbol}{(parseFloat(accStake) * totalOdds).toFixed(2)}
+                          {sel.stake && (
+                            <span style={{ fontSize: '0.7rem', color: sel.betType === 'lay' ? 'var(--live-red)' : 'var(--live-green)', fontWeight: 600 }}>
+                              {sel.betType === 'lay' 
+                                ? `Liability: ${fiatSymbol}${(parseFloat(sel.stake) * (sel.odd - 1)).toFixed(2)}`
+                                : `Return: ${fiatSymbol}${(parseFloat(sel.stake) * sel.odd).toFixed(2)}`
+                              }
                             </span>
                           )}
                         </div>
-                        <div style={{ display: 'flex', gap: '4px' }}>
-                          {[500, 1000, 2500, 5000].map((v) => (
-                            <button key={v} onClick={() => handleQuickStake(v, 'acc')} style={{ flex: 1, border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-panel)', borderRadius: '3px', fontSize: '0.65rem', color: 'var(--text-muted)', padding: '2px 0', cursor: 'pointer' }}>
+                        {/* Quick Stakes */}
+                        <div style={{ display: 'flex', gap: '4px', marginTop: '6px' }}>
+                          {[100, 500, 1000, 5000].map((v) => (
+                            <button key={v} onClick={() => handleQuickStake(v, sel.id)} style={{ flex: 1, border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-panel)', borderRadius: '3px', fontSize: '0.65rem', color: 'var(--text-muted)', padding: '2px 0', cursor: 'pointer' }}>
                               +{v}
                             </button>
                           ))}
@@ -357,47 +292,80 @@ export default function BetSlip() {
                       </div>
                     )}
                   </div>
-                )}
-
-                {/* Place Bet Footer Summary */}
-                <div style={{ marginTop: 'auto', borderTop: '1px solid var(--border-color)', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-                    <span style={{ color: 'var(--text-muted)' }}>{hasLaySelection ? "Total Stake/Liability:" : "Total Stake:"}</span>
-                    <span style={{ fontWeight: 700 }}>
-                      {fiatSymbol}{isAccumulator ? (parseFloat(accStake) || 0).toFixed(2) : totalSingleStakeOrLiability.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '4px' }}>
-                    <span style={{ color: 'var(--text-muted)' }}>{hasLaySelection ? "Potential Return (incl. liability):" : "Potential Returns:"}</span>
-                    <span style={{ fontWeight: 700, color: 'var(--live-green)' }}>
-                      {fiatSymbol}{isAccumulator ? ((parseFloat(accStake) || 0) * totalOdds).toFixed(2) : totalPotentialReturnSingle.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                    </span>
-                  </div>
-
-                  <button
-                    onClick={handlePlaceBet}
-                    disabled={loading}
-                    className="btn-primary"
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      fontSize: '0.9rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      opacity: loading ? 0.7 : 1,
-                      backgroundColor: 'var(--brand-emerald)',
-                      color: '#080a0f',
-                      boxShadow: '0 4px 14px rgba(5, 196, 139, 0.25)'
-                    }}
-                  >
-                    {loading ? "Placing Bet..." : "Place Bet"}
-                  </button>
-                </div>
+                ))}
               </div>
-            )}
-          </>
+
+              {/* Accumulator Toggle (Only if more than 1 selection) */}
+              {selections.length > 1 && (
+                <div style={{
+                  marginTop: '8px',
+                  borderTop: '1px solid var(--border-color)',
+                  paddingTop: '12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px'
+                }}>
+                  {hasLaySelection ? (
+                    <div style={{ fontSize: '0.75rem', color: '#ff9800', backgroundColor: 'rgba(255, 152, 0, 0.1)', padding: '8px', borderRadius: '6px', border: '1px solid rgba(255, 152, 0, 0.2)' }}>
+                      ⚠️ Combo/Accumulator bets are not available when Lay selections are in the slip.
+                    </div>
+                  ) : (
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.8rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={isAccumulator}
+                        onChange={(e) => setIsAccumulator(e.target.checked)}
+                        style={{ accentColor: 'var(--brand-emerald)' }}
+                      />
+                      <span>Bet as Accumulator / Combo</span>
+                    </label>
+                  )}
+
+                  {isAccumulator && !hasLaySelection && (
+                    <div style={{ backgroundColor: 'rgba(5, 196, 139, 0.04)', border: '1px dashed var(--brand-emerald)', borderRadius: '8px', padding: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                        <span>Combined Odds:</span>
+                        <span style={{ fontWeight: 800, color: 'var(--brand-emerald)' }}>{totalOdds.toFixed(2)}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center' }}>
+                          <span style={{ position: 'absolute', left: '8px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>{fiatSymbol}</span>
+                          <input
+                            type="number"
+                            placeholder="Acc Stake"
+                            value={accStake}
+                            onChange={(e) => setAccStake(e.target.value)}
+                            style={{
+                              width: '100%',
+                              backgroundColor: 'var(--bg-panel)',
+                              border: '1px solid var(--border-color)',
+                              borderRadius: '4px',
+                              padding: '6px 6px 6px 20px',
+                              color: '#ffffff',
+                              fontSize: '0.8rem',
+                              outline: 'none'
+                            }}
+                          />
+                        </div>
+                        {accStake && (
+                          <span style={{ fontSize: '0.7rem', color: 'var(--live-green)', fontWeight: 600 }}>
+                            Payout: {fiatSymbol}{(parseFloat(accStake) * totalOdds).toFixed(2)}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        {[500, 1000, 2500, 5000].map((v) => (
+                          <button key={v} onClick={() => handleQuickStake(v, 'acc')} style={{ flex: 1, border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-panel)', borderRadius: '3px', fontSize: '0.65rem', color: 'var(--text-muted)', padding: '2px 0', cursor: 'pointer' }}>
+                            +{v}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )
         )}
 
         {/* Tab 2: My Bets */}
@@ -460,7 +428,7 @@ export default function BetSlip() {
                     ))}
                   </div>
 
-                  {/* Financials details (converted to active fiat dynamically) */}
+                  {/* Financials details */}
                   <div style={{
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -508,6 +476,53 @@ export default function BetSlip() {
           </div>
         )}
       </div>
+
+      {/* Pinned Footer (For Bet Slip with selections) */}
+      {activeTab === 'slip' && selections.length > 0 && (
+        <div style={{
+          borderTop: '1px solid var(--border-color)',
+          padding: '12px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          backgroundColor: 'var(--bg-panel)',
+          flexShrink: 0
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+            <span style={{ color: 'var(--text-muted)' }}>{hasLaySelection ? "Total Stake/Liability:" : "Total Stake:"}</span>
+            <span style={{ fontWeight: 700 }}>
+              {fiatSymbol}{isAccumulator ? (parseFloat(accStake) || 0).toFixed(2) : totalSingleStakeOrLiability.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+            </span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '4px' }}>
+            <span style={{ color: 'var(--text-muted)' }}>{hasLaySelection ? "Potential Return (incl. liability):" : "Potential Returns:"}</span>
+            <span style={{ fontWeight: 700, color: 'var(--live-green)' }}>
+              {fiatSymbol}{isAccumulator ? ((parseFloat(accStake) || 0) * totalOdds).toFixed(2) : totalPotentialReturnSingle.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+            </span>
+          </div>
+
+          <button
+            onClick={handlePlaceBet}
+            disabled={loading}
+            className="btn-primary"
+            style={{
+              width: '100%',
+              padding: '12px',
+              fontSize: '0.9rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              opacity: loading ? 0.7 : 1,
+              backgroundColor: 'var(--brand-emerald)',
+              color: '#080a0f',
+              boxShadow: '0 4px 14px rgba(5, 196, 139, 0.25)'
+            }}
+          >
+            {loading ? "Placing Bet..." : "Place Bet"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
