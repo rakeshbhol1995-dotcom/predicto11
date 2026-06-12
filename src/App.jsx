@@ -107,6 +107,18 @@ function MainAppContent() {
 
   const { user, placedBets, setPlacedBets } = useBet();
 
+  // Initialize bookmaker selections on mount for Odds-API.io
+  useEffect(() => {
+    if (ODDS_API_KEY) {
+      fetch(`https://api.odds-api.io/v3/bookmakers/selected/select?bookmakers=Bet365,Betfair Exchange&apiKey=${ODDS_API_KEY}`, {
+        method: 'PUT'
+      })
+      .then(res => res.json())
+      .then(data => console.log("Odds-API.io bookmaker selection initialized:", data))
+      .catch(err => console.error("Error initializing bookmakers:", err));
+    }
+  }, []);
+
   // Keep selectedMatch updated with the latest state of matches
   useEffect(() => {
     if (selectedMatch) {
@@ -197,121 +209,119 @@ function MainAppContent() {
         console.error("EntitySport API error:", err.message);
       }
 
-      // 2. Fetch other sports from The Odds API
+      // 2. Fetch other sports from Odds-API.io
       if (ODDS_API_KEY) {
         try {
-          const res = await fetch(`https://api.the-odds-api.com/v4/sports/upcoming/odds/?apiKey=${ODDS_API_KEY}&regions=eu,us&markets=h2h`);
-          if (res.ok) {
-            const data = await res.json();
-            if (Array.isArray(data) && data.length > 0) {
-              oddsMatches = data.slice(0, 15).map(event => {
-                let sport = "Soccer";
-                const sk = event.sport_key.toLowerCase();
-                
-                // Skip Cricket from Odds API to avoid duplicate simulated cricket matches
-                if (sk.includes("cricket")) return null;
-                else if (sk.includes("tennis")) sport = "Tennis";
-                else if (sk.includes("basketball")) sport = "Basketball";
-                else if (sk.includes("soccer") || sk.includes("football")) sport = "Soccer";
-                else if (sk.includes("baseball")) sport = "Baseball";
-                else if (sk.includes("icehockey")) sport = "Ice Hockey";
-                else sport = event.sport_title || "Soccer";
+          const sportsList = ['football', 'basketball', 'tennis'];
+          const eventPromises = sportsList.map(sportSlug =>
+            fetch(`https://api.odds-api.io/v3/events?sport=${sportSlug}&apiKey=${ODDS_API_KEY}`)
+              .then(res => res.ok ? res.json() : [])
+              .catch(() => [])
+          );
 
-                const bookmaker = event.bookmakers?.find(b => b.markets?.some(m => m.key === 'h2h')) || event.bookmakers?.[0];
-                const market = bookmaker?.markets?.find(m => m.key === "h2h");
-                
-                let oddsHome = 1.90;
-                let oddsAway = 1.90;
-                let oddsDraw = null;
-
-                if (market?.outcomes && market.outcomes.length >= 2) {
-                  const o1 = market.outcomes[0];
-                  const o2 = market.outcomes[1];
-                  const o3 = market.outcomes[2];
-
-                  const isMatch = (name, team) => {
-                    if (!name || !team) return false;
-                    const n = name.toLowerCase().trim();
-                    const t = team.toLowerCase().trim();
-                    return n === t || n.includes(t) || t.includes(n);
-                  };
-
-                  let homeOutcome = market.outcomes.find(o => isMatch(o.name, event.home_team));
-                  let awayOutcome = market.outcomes.find(o => isMatch(o.name, event.away_team));
-                  let drawOutcome = market.outcomes.find(o => o.name.toLowerCase() === "draw" || o.name.toLowerCase() === "tie");
-
-                  if (!homeOutcome && !awayOutcome) {
-                    homeOutcome = o1;
-                    awayOutcome = o2;
-                    if (market.outcomes.length === 3) drawOutcome = o3;
-                  } else if (!homeOutcome) {
-                    homeOutcome = o1 === awayOutcome ? o2 : o1;
-                  } else if (!awayOutcome) {
-                    awayOutcome = o1 === homeOutcome ? o2 : o1;
-                  }
-
-                  if (homeOutcome) oddsHome = homeOutcome.price;
-                  if (awayOutcome) oddsAway = awayOutcome.price;
-                  if (drawOutcome) oddsDraw = drawOutcome.price;
-                }
-
-                let homeScore = "1";
-                let awayScore = "0";
-                let status = "live";
-                let time = "56:45";
-                let eventStatus = "Game Play in Progress";
-
-                if (sport === 'Tennis') {
-                  homeScore = "2 | 15";
-                  awayScore = "1 | 30";
-                  time = "Set 3";
-                  eventStatus = "Break point opportunity";
-                } else if (sport === 'Soccer') {
-                  homeScore = "1";
-                  awayScore = "0";
-                  time = "56:45";
-                  eventStatus = "Attacking possession";
-                } else if (sport === 'Basketball') {
-                  homeScore = "88";
-                  awayScore = "92";
-                  time = "Q4 4:12";
-                  eventStatus = "Free throws awarded";
-                } else {
-                  homeScore = "3";
-                  awayScore = "2";
-                  time = "Period 2";
-                  eventStatus = "Powerplay";
-                }
-
-                return {
-                  id: event.id,
-                  sport: sport,
-                  league: event.sport_title,
-                  homeTeam: event.home_team,
-                  awayTeam: event.away_team,
-                  homeScore: homeScore,
-                  awayScore: awayScore,
-                  time: time,
-                  status: status,
-                  eventStatus: eventStatus,
-                  stats: {
-                    possession: [52, 48],
-                    shots: [11, 8],
-                    corners: [4, 3]
-                  },
-                  odds: {
-                    home: oddsHome,
-                    draw: oddsDraw || (sport === 'Soccer' ? 3.40 : null),
-                    away: oddsAway
-                  }
-                };
-              }).filter(Boolean);
-              
-              oddsSuccess = true;
+          const eventsResults = await Promise.all(eventPromises);
+          
+          let allEvents = [];
+          eventsResults.forEach(eventList => {
+            if (Array.isArray(eventList)) {
+              allEvents = [...allEvents, ...eventList];
             }
+          });
+
+          // Filter for active/upcoming events
+          const activeEvents = allEvents.filter(e => e.status === 'live' || e.status === 'pending' || e.status === 'scheduled');
+          
+          // Sort live events first, then by date
+          activeEvents.sort((a, b) => {
+            if (a.status === 'live' && b.status !== 'live') return -1;
+            if (a.status !== 'live' && b.status === 'live') return 1;
+            return new Date(a.date) - new Date(b.date);
+          });
+
+          // Take top 15 events
+          const targetEvents = activeEvents.slice(0, 15);
+          
+          if (targetEvents.length > 0) {
+            const eventIds = targetEvents.map(e => e.id).join(',');
+            const oddsRes = await fetch(`https://api.odds-api.io/v3/odds/multi?eventIds=${eventIds}&bookmakers=Bet365,Betfair Exchange&apiKey=${ODDS_API_KEY}`);
+            
+            if (oddsRes.ok) {
+              const oddsData = await oddsRes.json();
+              
+              if (Array.isArray(oddsData)) {
+                oddsMatches = oddsData.map(event => {
+                  let sport = "Soccer";
+                  const slug = event.sport?.slug || "";
+                  if (slug.includes("tennis")) sport = "Tennis";
+                  else if (slug.includes("basketball")) sport = "Basketball";
+                  else sport = event.sport?.name || "Soccer";
+
+                  let oddsHome = 1.90;
+                  let oddsAway = 1.90;
+                  let oddsDraw = null;
+
+                  const bookmakersObj = event.bookmakers || {};
+                  const bookmakerName = Object.keys(bookmakersObj).find(name => name === 'Bet365' || name === 'Betfair Exchange') || Object.keys(bookmakersObj)[0];
+                  
+                  if (bookmakerName) {
+                    const markets = bookmakersObj[bookmakerName] || [];
+                    const h2hMarket = markets.find(m => m.name === 'ML' || m.name === 'Match Winner' || m.name === 'Match Odds');
+                    if (h2hMarket && h2hMarket.odds && h2hMarket.odds.length > 0) {
+                      const outcome = h2hMarket.odds[0];
+                      if (outcome.home) oddsHome = parseFloat(outcome.home);
+                      if (outcome.away) oddsAway = parseFloat(outcome.away);
+                      if (outcome.draw) oddsDraw = parseFloat(outcome.draw);
+                    }
+                  }
+
+                  let homeScore = event.scores?.home !== undefined ? event.scores.home.toString() : "0";
+                  let awayScore = event.scores?.away !== undefined ? event.scores.away.toString() : "0";
+                  
+                  const isLive = event.status === "live";
+                  const status = isLive ? "live" : "upcoming";
+                  
+                  let time = "Scheduled";
+                  if (isLive) {
+                    time = "Live";
+                  } else {
+                    const eventDate = new Date(event.date);
+                    time = eventDate.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + 
+                           eventDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+                  }
+
+                  let eventStatus = isLive ? "Game Play in Progress" : "Scheduled Match";
+
+                  return {
+                    id: event.id,
+                    sport: sport,
+                    league: event.league?.name || "International League",
+                    homeTeam: event.home,
+                    awayTeam: event.away,
+                    homeScore: homeScore,
+                    awayScore: awayScore,
+                    time: time,
+                    status: status,
+                    eventStatus: eventStatus,
+                    stats: {
+                      possession: [50, 50],
+                      shots: [0, 0],
+                      corners: [0, 0]
+                    },
+                    odds: {
+                      home: oddsHome,
+                      draw: oddsDraw || (sport === 'Soccer' ? 3.40 : null),
+                      away: oddsAway
+                    }
+                  };
+                });
+                oddsSuccess = true;
+              }
+            }
+          } else {
+            oddsSuccess = true;
           }
         } catch (err) {
-          console.error("Odds API Error:", err.message);
+          console.error("Odds-API.io Error:", err.message);
         }
       }
 
@@ -325,22 +335,17 @@ function MainAppContent() {
       }
 
       if (merged.length > 0) {
-        // Keep simulated matches but filter out the ones replaced by real ones
         const combined = [
           ...merged,
           ...INITIAL_MATCHES.filter(im => 
             !merged.some(m => 
               (m.homeTeam.toLowerCase() === im.homeTeam.toLowerCase() && m.awayTeam.toLowerCase() === im.awayTeam.toLowerCase()) ||
-              (m.sport === im.sport && im.sport === 'Cricket') // replace all default simulation cricket
+              (m.sport === im.sport && im.sport === 'Cricket')
             )
           )
         ];
         
-        setMatches(prevMatches => {
-          // Preserve custom adjustments or placed bet references if needed, or drop-in update
-          return combined;
-        });
-
+        setMatches(combined);
         setIsLiveApi(true);
         setApiStatus(entitySuccess && oddsSuccess ? 'Live Active' : (entitySuccess ? 'Cricket Live' : 'Odds Live'));
       } else {
@@ -350,7 +355,7 @@ function MainAppContent() {
     };
 
     fetchAll();
-    const interval = setInterval(fetchAll, 30000); // Fetch every 30 seconds
+    const interval = setInterval(fetchAll, 60000); // Fetch every 60 seconds (1 minute)
     return () => clearInterval(interval);
   }, []);
 
