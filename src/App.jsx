@@ -223,7 +223,7 @@ function MainAppContent() {
     };
 
     fetchEvents();
-    const interval = setInterval(fetchEvents, 600000); // Fetch list every 10 minutes
+    const interval = setInterval(fetchEvents, 240000); // Fetch list every 4 minutes (rate limit safe)
     return () => clearInterval(interval);
   }, []);
 
@@ -292,8 +292,37 @@ function MainAppContent() {
                   }
                 }
 
-                let homeScore = event.scores?.home !== undefined ? event.scores.home.toString() : "0";
-                let awayScore = event.scores?.away !== undefined ? event.scores.away.toString() : "0";
+                let homeScore = "0";
+                let awayScore = "0";
+
+                // Merge real-time score from cached eventsList (which contains scores)
+                const matchingEvent = eventsList.find(e => e.id === event.id);
+                const scoreObj = event.scores || matchingEvent?.scores;
+
+                if (scoreObj) {
+                  if (sport === 'Tennis') {
+                    // Tennis score format: sets won | games in current set
+                    const homeSets = scoreObj.home !== undefined ? scoreObj.home : 0;
+                    const awaySets = scoreObj.away !== undefined ? scoreObj.away : 0;
+                    
+                    let homeGames = 0;
+                    let awayGames = 0;
+                    if (scoreObj.periods) {
+                      const pKeys = Object.keys(scoreObj.periods).sort();
+                      if (pKeys.length > 0) {
+                        const currentPeriodKey = pKeys[pKeys.length - 1];
+                        const currentPeriod = scoreObj.periods[currentPeriodKey];
+                        homeGames = currentPeriod.home !== undefined ? currentPeriod.home : 0;
+                        awayGames = currentPeriod.away !== undefined ? currentPeriod.away : 0;
+                      }
+                    }
+                    homeScore = `${homeSets} | ${homeGames}`;
+                    awayScore = `${awaySets} | ${awayGames}`;
+                  } else {
+                    homeScore = scoreObj.home !== undefined ? scoreObj.home.toString() : "0";
+                    awayScore = scoreObj.away !== undefined ? scoreObj.away.toString() : "0";
+                  }
+                }
                 
                 const isLive = event.status === "live";
                 const status = isLive ? "live" : "upcoming";
@@ -388,7 +417,7 @@ function MainAppContent() {
     };
 
     fetchOddsAndMerged();
-    const interval = setInterval(fetchOddsAndMerged, 90000); // Poll odds every 90 seconds
+    const interval = setInterval(fetchOddsAndMerged, 120000); // Poll odds every 2 minutes (rate limit safe)
     return () => clearInterval(interval);
   }, [eventsList]);
 
