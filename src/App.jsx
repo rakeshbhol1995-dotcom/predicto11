@@ -238,8 +238,8 @@ function MainAppContent() {
             return new Date(a.date) - new Date(b.date);
           });
 
-          // Take top 15 events
-          const targetEvents = activeEvents.slice(0, 15);
+          // Take top 10 events
+          const targetEvents = activeEvents.slice(0, 10);
           
           if (targetEvents.length > 0) {
             const eventIds = targetEvents.map(e => e.id).join(',');
