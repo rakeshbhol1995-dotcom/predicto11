@@ -345,6 +345,15 @@ function MainAppContent() {
         oddsSuccess = false;
       }
 
+      // Merge and update matches state
+      let merged = [];
+      if (entitySuccess && entityMatches.length > 0) {
+        merged = [...entityMatches];
+      }
+      if (oddsSuccess && oddsMatches.length > 0) {
+        merged = [...merged, ...oddsMatches];
+      }
+
       console.log("Debug FetchAll:", {
         ODDS_API_KEY_EXISTS: !!ODDS_API_KEY,
         ENTITY_SPORT_TOKEN_EXISTS: !!ENTITY_SPORT_TOKEN,
