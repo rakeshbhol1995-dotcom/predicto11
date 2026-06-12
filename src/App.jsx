@@ -335,6 +335,16 @@ function MainAppContent() {
         merged = [...merged, ...oddsMatches];
       }
 
+      console.log("Debug FetchAll:", {
+        ODDS_API_KEY_EXISTS: !!ODDS_API_KEY,
+        ENTITY_SPORT_TOKEN_EXISTS: !!ENTITY_SPORT_TOKEN,
+        oddsSuccess,
+        entitySuccess,
+        oddsMatchesCount: oddsMatches.length,
+        entityMatchesCount: entityMatches.length,
+        mergedCount: merged.length
+      });
+
       if (merged.length > 0) {
         const combined = [
           ...merged,
@@ -347,10 +357,12 @@ function MainAppContent() {
           )
         ];
         
+        console.log("Combined matches to render:", combined.map(m => `${m.sport} - ${m.homeTeam} vs ${m.awayTeam} (${m.status})`));
         setMatches(combined);
         setIsLiveApi(true);
         setApiStatus(entitySuccess && oddsSuccess ? 'Live Active' : (entitySuccess ? 'Cricket Live' : 'Odds Live'));
       } else {
+        console.log("No live data merged. Falling back to simulator.");
         setApiStatus('Failed - Using Simulator');
         setIsLiveApi(false);
       }
