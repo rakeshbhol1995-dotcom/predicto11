@@ -101,6 +101,7 @@ function MainAppContent() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isLiveApi, setIsLiveApi] = useState(false);
   const [apiStatus, setApiStatus] = useState('Disconnected');
+  const [apiRateLimited, setApiRateLimited] = useState(false);
   const [eventsList, setEventsList] = useState([]);
   
   // Views: 'dashboard' | 'match-detail' | 'admin' | 'mobile-slip' | 'mobile-mybets'
@@ -191,13 +192,23 @@ function MainAppContent() {
       try {
         console.log("Fetching sports events list from Odds-API.io...");
         const sportsList = ['football', 'basketball', 'tennis'];
+        let rateLimitHit = false;
         const eventPromises = sportsList.map(sportSlug =>
           fetch(`https://api.odds-api.io/v3/events?sport=${sportSlug}&apiKey=${ODDS_API_KEY}`)
-            .then(res => res.ok ? res.json() : [])
+            .then(res => {
+              if (res.status === 429) rateLimitHit = true;
+              return res.ok ? res.json() : [];
+            })
             .catch(() => [])
         );
 
         const eventsResults = await Promise.all(eventPromises);
+        if (rateLimitHit) {
+          setApiRateLimited(true);
+        } else if (eventsResults.some(r => r.length > 0)) {
+          setApiRateLimited(false);
+        }
+
         let allEvents = [];
         eventsResults.forEach(eventList => {
           if (Array.isArray(eventList)) {
@@ -362,9 +373,11 @@ function MainAppContent() {
                 };
               });
               oddsSuccess = true;
+              setApiRateLimited(false);
             }
           } else if (oddsRes.status === 429) {
             console.warn("Odds-API.io rate limit (429) hit. Falling back to simulator.");
+            setApiRateLimited(true);
           }
         } catch (err) {
           console.error("Odds-API.io Error:", err.message);
@@ -411,7 +424,7 @@ function MainAppContent() {
         setApiStatus(entitySuccess && oddsSuccess ? 'Live Active' : (entitySuccess ? 'Cricket Live' : 'Odds Live'));
       } else {
         console.log("No live data merged. Falling back to simulator.");
-        setApiStatus('Failed - Using Simulator');
+        setApiStatus(apiRateLimited ? 'Rate Limited' : 'Failed - Using Simulator');
         setIsLiveApi(false);
       }
     };

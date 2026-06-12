@@ -72,9 +72,9 @@ export default function Header({ activeTab, setActiveTab, onOpenDeposit, onOpenA
           {apiStatus && (
             <span style={{
               fontSize: '0.6rem',
-              color: isLiveApi ? 'var(--brand-emerald)' : 'rgba(255,255,255,0.4)',
+              color: isLiveApi ? 'var(--brand-emerald)' : (apiStatus.toLowerCase().includes('rate limit') ? '#ff9800' : 'rgba(255,255,255,0.4)'),
               background: 'rgba(255,255,255,0.05)',
-              border: isLiveApi ? '1.2px solid var(--brand-emerald)' : '1px solid rgba(255,255,255,0.1)',
+              border: isLiveApi ? '1.2px solid var(--brand-emerald)' : (apiStatus.toLowerCase().includes('rate limit') ? '1px solid #ff9800' : '1px solid rgba(255,255,255,0.1)'),
               padding: '2px 6px',
               borderRadius: '4px',
               fontWeight: 800,
@@ -87,10 +87,10 @@ export default function Header({ activeTab, setActiveTab, onOpenDeposit, onOpenA
                 width: '6px',
                 height: '6px',
                 borderRadius: '50%',
-                backgroundColor: isLiveApi ? 'var(--brand-emerald)' : 'var(--live-red)',
+                backgroundColor: isLiveApi ? 'var(--brand-emerald)' : (apiStatus.toLowerCase().includes('rate limit') ? '#ff9800' : 'var(--live-red)'),
                 display: 'inline-block'
               }} />
-              {isLiveApi ? 'LIVE API' : 'SIMULATION'}
+              {isLiveApi ? 'LIVE API' : (apiStatus.toLowerCase().includes('rate limit') ? 'RATE LIMITED' : 'SIMULATION')}
             </span>
           )}
         </div>
