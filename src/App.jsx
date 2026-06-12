@@ -254,6 +254,7 @@ function MainAppContent() {
                   const slug = event.sport?.slug || "";
                   if (slug.includes("tennis")) sport = "Tennis";
                   else if (slug.includes("basketball")) sport = "Basketball";
+                  else if (slug.includes("football") || slug.includes("soccer")) sport = "Soccer";
                   else sport = event.sport?.name || "Soccer";
 
                   let oddsHome = 1.90;
@@ -339,9 +340,10 @@ function MainAppContent() {
           ...merged,
           ...INITIAL_MATCHES.filter(im => 
             !merged.some(m => 
-              (m.homeTeam.toLowerCase() === im.homeTeam.toLowerCase() && m.awayTeam.toLowerCase() === im.awayTeam.toLowerCase()) ||
-              (m.sport === im.sport && im.sport === 'Cricket')
-            )
+              m.homeTeam.toLowerCase() === im.homeTeam.toLowerCase() && m.awayTeam.toLowerCase() === im.awayTeam.toLowerCase()
+            ) &&
+            !(oddsSuccess && (im.sport === 'Soccer' || im.sport === 'Tennis' || im.sport === 'Basketball')) &&
+            !(entitySuccess && im.sport === 'Cricket')
           )
         ];
         
