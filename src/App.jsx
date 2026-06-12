@@ -101,6 +101,7 @@ function MainAppContent() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isLiveApi, setIsLiveApi] = useState(false);
   const [apiStatus, setApiStatus] = useState('Disconnected');
+  const [eventsList, setEventsList] = useState([]);
   
   // Views: 'dashboard' | 'match-detail' | 'admin' | 'mobile-slip' | 'mobile-mybets'
   const [currentView, setCurrentView] = useState('dashboard');
@@ -182,17 +183,61 @@ function MainAppContent() {
     };
   };
 
-  // Fetch real matches and odds from both APIs periodically
+  // 1. Fetch events list once on mount and every 10 minutes
+  useEffect(() => {
+    if (!ODDS_API_KEY) return;
+
+    const fetchEvents = async () => {
+      try {
+        console.log("Fetching sports events list from Odds-API.io...");
+        const sportsList = ['football', 'basketball', 'tennis'];
+        const eventPromises = sportsList.map(sportSlug =>
+          fetch(`https://api.odds-api.io/v3/events?sport=${sportSlug}&apiKey=${ODDS_API_KEY}`)
+            .then(res => res.ok ? res.json() : [])
+            .catch(() => [])
+        );
+
+        const eventsResults = await Promise.all(eventPromises);
+        let allEvents = [];
+        eventsResults.forEach(eventList => {
+          if (Array.isArray(eventList)) {
+            allEvents = [...allEvents, ...eventList];
+          }
+        });
+
+        // Filter for active/upcoming events
+        const active = allEvents.filter(e => e.status === 'live' || e.status === 'pending' || e.status === 'scheduled');
+        
+        // Sort live events first, then by date
+        active.sort((a, b) => {
+          if (a.status === 'live' && b.status !== 'live') return -1;
+          if (a.status !== 'live' && b.status === 'live') return 1;
+          return new Date(a.date) - new Date(b.date);
+        });
+
+        setEventsList(active);
+        console.log(`Updated Odds-API.io events list: ${active.length} active events cached.`);
+      } catch (err) {
+        console.error("Error fetching events:", err);
+      }
+    };
+
+    fetchEvents();
+    const interval = setInterval(fetchEvents, 600000); // Fetch list every 10 minutes
+    return () => clearInterval(interval);
+  }, []);
+
+  // 2. Poll odds for the cached events list every 90 seconds
   useEffect(() => {
     setApiStatus('Connecting...');
 
-    const fetchAll = async () => {
+    const fetchOddsAndMerged = async () => {
       let oddsMatches = [];
       let entityMatches = [];
       let oddsSuccess = false;
       let entitySuccess = false;
 
-      // 1. Fetch Cricket from EntitySport API
+      // Fetch Cricket from EntitySport API
       try {
         const liveRes = await fetch(`https://restapi.entitysport.com/v2/matches/?status=3&token=${ENTITY_SPORT_TOKEN}`);
         const liveData = await liveRes.json();
@@ -209,130 +254,95 @@ function MainAppContent() {
         console.error("EntitySport API error:", err.message);
       }
 
-      // 2. Fetch other sports from Odds-API.io
-      if (ODDS_API_KEY) {
+      // Fetch Odds for top 10 cached events
+      if (ODDS_API_KEY && eventsList.length > 0) {
         try {
-          const sportsList = ['football', 'basketball', 'tennis'];
-          const eventPromises = sportsList.map(sportSlug =>
-            fetch(`https://api.odds-api.io/v3/events?sport=${sportSlug}&apiKey=${ODDS_API_KEY}`)
-              .then(res => res.ok ? res.json() : [])
-              .catch(() => [])
-          );
-
-          const eventsResults = await Promise.all(eventPromises);
+          const targetEvents = eventsList.slice(0, 10);
+          const eventIds = targetEvents.map(e => e.id).join(',');
           
-          let allEvents = [];
-          eventsResults.forEach(eventList => {
-            if (Array.isArray(eventList)) {
-              allEvents = [...allEvents, ...eventList];
-            }
-          });
-
-          // Filter for active/upcoming events
-          const activeEvents = allEvents.filter(e => e.status === 'live' || e.status === 'pending' || e.status === 'scheduled');
+          console.log(`Polling live odds for ${targetEvents.length} events: ${eventIds}`);
+          const oddsRes = await fetch(`https://api.odds-api.io/v3/odds/multi?eventIds=${eventIds}&bookmakers=Bet365,Betfair Exchange&apiKey=${ODDS_API_KEY}`);
           
-          // Sort live events first, then by date
-          activeEvents.sort((a, b) => {
-            if (a.status === 'live' && b.status !== 'live') return -1;
-            if (a.status !== 'live' && b.status === 'live') return 1;
-            return new Date(a.date) - new Date(b.date);
-          });
+          if (oddsRes.ok) {
+            const oddsData = await oddsRes.json();
+            if (Array.isArray(oddsData)) {
+              oddsMatches = oddsData.map(event => {
+                let sport = "Soccer";
+                const slug = event.sport?.slug || "";
+                if (slug.includes("tennis")) sport = "Tennis";
+                else if (slug.includes("basketball")) sport = "Basketball";
+                else if (slug.includes("football") || slug.includes("soccer")) sport = "Soccer";
+                else sport = event.sport?.name || "Soccer";
 
-          // Take top 10 events
-          const targetEvents = activeEvents.slice(0, 10);
-          
-          if (targetEvents.length > 0) {
-            const eventIds = targetEvents.map(e => e.id).join(',');
-            const oddsRes = await fetch(`https://api.odds-api.io/v3/odds/multi?eventIds=${eventIds}&bookmakers=Bet365,Betfair Exchange&apiKey=${ODDS_API_KEY}`);
-            
-            if (oddsRes.ok) {
-              const oddsData = await oddsRes.json();
-              
-              if (Array.isArray(oddsData)) {
-                oddsMatches = oddsData.map(event => {
-                  let sport = "Soccer";
-                  const slug = event.sport?.slug || "";
-                  if (slug.includes("tennis")) sport = "Tennis";
-                  else if (slug.includes("basketball")) sport = "Basketball";
-                  else if (slug.includes("football") || slug.includes("soccer")) sport = "Soccer";
-                  else sport = event.sport?.name || "Soccer";
+                let oddsHome = 1.90;
+                let oddsAway = 1.90;
+                let oddsDraw = null;
 
-                  let oddsHome = 1.90;
-                  let oddsAway = 1.90;
-                  let oddsDraw = null;
-
-                  const bookmakersObj = event.bookmakers || {};
-                  const bookmakerName = Object.keys(bookmakersObj).find(name => name === 'Bet365' || name === 'Betfair Exchange') || Object.keys(bookmakersObj)[0];
-                  
-                  if (bookmakerName) {
-                    const markets = bookmakersObj[bookmakerName] || [];
-                    const h2hMarket = markets.find(m => m.name === 'ML' || m.name === 'Match Winner' || m.name === 'Match Odds');
-                    if (h2hMarket && h2hMarket.odds && h2hMarket.odds.length > 0) {
-                      const outcome = h2hMarket.odds[0];
-                      if (outcome.home) oddsHome = parseFloat(outcome.home);
-                      if (outcome.away) oddsAway = parseFloat(outcome.away);
-                      if (outcome.draw) oddsDraw = parseFloat(outcome.draw);
-                    }
+                const bookmakersObj = event.bookmakers || {};
+                const bookmakerName = Object.keys(bookmakersObj).find(name => name === 'Bet365' || name === 'Betfair Exchange') || Object.keys(bookmakersObj)[0];
+                
+                if (bookmakerName) {
+                  const markets = bookmakersObj[bookmakerName] || [];
+                  const h2hMarket = markets.find(m => m.name === 'ML' || m.name === 'Match Winner' || m.name === 'Match Odds');
+                  if (h2hMarket && h2hMarket.odds && h2hMarket.odds.length > 0) {
+                    const outcome = h2hMarket.odds[0];
+                    if (outcome.home) oddsHome = parseFloat(outcome.home);
+                    if (outcome.away) oddsAway = parseFloat(outcome.away);
+                    if (outcome.draw) oddsDraw = parseFloat(outcome.draw);
                   }
+                }
 
-                  let homeScore = event.scores?.home !== undefined ? event.scores.home.toString() : "0";
-                  let awayScore = event.scores?.away !== undefined ? event.scores.away.toString() : "0";
-                  
-                  const isLive = event.status === "live";
-                  const status = isLive ? "live" : "upcoming";
-                  
-                  let time = "Scheduled";
-                  if (isLive) {
-                    time = "Live";
-                  } else {
-                    const eventDate = new Date(event.date);
-                    time = eventDate.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + 
-                           eventDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+                let homeScore = event.scores?.home !== undefined ? event.scores.home.toString() : "0";
+                let awayScore = event.scores?.away !== undefined ? event.scores.away.toString() : "0";
+                
+                const isLive = event.status === "live";
+                const status = isLive ? "live" : "upcoming";
+                
+                let time = "Scheduled";
+                if (isLive) {
+                  time = "Live";
+                } else {
+                  const eventDate = new Date(event.date);
+                  time = eventDate.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + 
+                         eventDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+                }
+
+                let eventStatus = isLive ? "Game Play in Progress" : "Scheduled Match";
+
+                return {
+                  id: event.id,
+                  sport: sport,
+                  league: event.league?.name || "International League",
+                  homeTeam: event.home,
+                  awayTeam: event.away,
+                  homeScore: homeScore,
+                  awayScore: awayScore,
+                  time: time,
+                  status: status,
+                  eventStatus: eventStatus,
+                  stats: {
+                    possession: [50, 50],
+                    shots: [0, 0],
+                    corners: [0, 0]
+                  },
+                  odds: {
+                    home: oddsHome,
+                    draw: oddsDraw || (sport === 'Soccer' ? 3.40 : null),
+                    away: oddsAway
                   }
-
-                  let eventStatus = isLive ? "Game Play in Progress" : "Scheduled Match";
-
-                  return {
-                    id: event.id,
-                    sport: sport,
-                    league: event.league?.name || "International League",
-                    homeTeam: event.home,
-                    awayTeam: event.away,
-                    homeScore: homeScore,
-                    awayScore: awayScore,
-                    time: time,
-                    status: status,
-                    eventStatus: eventStatus,
-                    stats: {
-                      possession: [50, 50],
-                      shots: [0, 0],
-                      corners: [0, 0]
-                    },
-                    odds: {
-                      home: oddsHome,
-                      draw: oddsDraw || (sport === 'Soccer' ? 3.40 : null),
-                      away: oddsAway
-                    }
-                  };
-                });
-                oddsSuccess = true;
-              }
+                };
+              });
+              oddsSuccess = true;
             }
-          } else {
-            oddsSuccess = true;
+          } else if (oddsRes.status === 429) {
+            console.warn("Odds-API.io rate limit (429) hit. Falling back to simulator.");
           }
         } catch (err) {
           console.error("Odds-API.io Error:", err.message);
         }
-      }
-
-      // Merge and update matches state
-      let merged = [];
-      if (entitySuccess && entityMatches.length > 0) {
-        merged = [...entityMatches];
-      }
-      if (oddsSuccess && oddsMatches.length > 0) {
-        merged = [...merged, ...oddsMatches];
+      } else if (eventsList.length === 0) {
+        // If eventsList is not loaded yet, do not trigger a success flag but let it fetch
+        oddsSuccess = false;
       }
 
       console.log("Debug FetchAll:", {
@@ -368,10 +378,10 @@ function MainAppContent() {
       }
     };
 
-    fetchAll();
-    const interval = setInterval(fetchAll, 60000); // Fetch every 60 seconds (1 minute)
+    fetchOddsAndMerged();
+    const interval = setInterval(fetchOddsAndMerged, 90000); // Poll odds every 90 seconds
     return () => clearInterval(interval);
-  }, []);
+  }, [eventsList]);
 
 
   // Simulation Engine Loop
