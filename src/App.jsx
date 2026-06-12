@@ -404,6 +404,8 @@ function MainAppContent() {
 
       const updatedMatches = matches.map((match) => {
         if (match.id !== randomMatch.id) return match;
+        // Skip simulation for real live API matches
+        if (typeof match.id === 'number' || match.id.toString().startsWith('entity-')) return match;
 
         const newOdds = { ...match.odds };
         const flashState = {};
@@ -495,9 +497,9 @@ function MainAppContent() {
             newHomeScore = `${runs}/${wkts}`;
           }
         } else if (match.sport === 'Tennis') {
-          const setParts = match.homeScore.split('|');
-          let currentSet = parseInt(setParts[0].trim());
-          let points = setParts[1].trim();
+          const setParts = (match.homeScore || "0 | 0").toString().split('|');
+          let currentSet = parseInt(setParts[0]?.trim() || "0");
+          let points = setParts[1]?.trim() || "0";
 
           const scoreSequence = ["0", "15", "30", "40", "Ad"];
           let ptsIdx = scoreSequence.indexOf(points);
